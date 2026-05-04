@@ -1,1 +1,359 @@
-hello
+import { useState } from "react";
+import { useNavigate } from "react-router";
+import { mockPosts } from "../data/mockPosts";
+import { PostCard } from "../components/PostCard";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Gamepad2, BookOpen, Sparkles, Search, Flame } from "lucide-react";
+import { motion } from "motion/react";
+
+export function Home() {
+  const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState<"전체" | "게임" | "공부">("전체");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredPosts = mockPosts.filter((post) => {
+    const matchesCategory =
+      selectedCategory === "전체" || post.category === selectedCategory;
+
+    const matchesSearch =
+      searchQuery === "" ||
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.gameName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.studyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesCategory && matchesSearch;
+  });
+
+  return (
+    <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF]">
+      <header className="px-5 pt-10 pb-6 bg-white rounded-b-[32px] shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, y: -18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="text-center"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Sparkles className="w-7 h-7 text-violet-500" />
+            <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-500 bg-clip-text text-transparent">
+              끼리끼리
+            </h1>
+            <Sparkles className="w-7 h-7 text-violet-500" />
+          </div>
+
+          <p className="mt-2 text-sm text-slate-500">
+            게임 파티원 & 스터디 그룹 모집
+          </p>
+        </motion.div>
+
+        <motion.div
+          className="mt-7 relative"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="제목, 게임명, 스터디명 검색..."
+            className="h-14 pl-12 rounded-2xl bg-slate-100 border-0 text-base shadow-inner"
+          />
+        </motion.div>
+
+        <motion.div
+          className="grid grid-cols-3 gap-2 mt-4"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <Button
+            onClick={() => setSelectedCategory("전체")}
+            className={`h-12 rounded-2xl ${
+              selectedCategory === "전체"
+                ? "bg-slate-950 text-white"
+                : "bg-white text-slate-700 border border-slate-200"
+            }`}
+          >
+            전체
+          </Button>
+
+          <Button
+            onClick={() => setSelectedCategory("게임")}
+            className={`h-12 rounded-2xl gap-1.5 ${
+              selectedCategory === "게임"
+                ? "bg-violet-600 text-white"
+                : "bg-white text-slate-700 border border-slate-200"
+            }`}
+          >
+            <Gamepad2 className="w-4 h-4" />
+            게임
+          </Button>
+
+          <Button
+            onClick={() => setSelectedCategory("공부")}
+            className={`h-12 rounded-2xl gap-1.5 ${
+              selectedCategory === "공부"
+                ? "bg-violet-600 text-white"
+                : "bg-white text-slate-700 border border-slate-200"
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            공부
+          </Button>
+        </motion.div>
+      </header>
+
+      <main className="px-5 py-6">
+        <div className="flex items-end justify-between mb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Flame className="w-5 h-5 text-violet-600" />
+              <h2 className="text-2xl font-black text-slate-950">
+                모집 중인 파티
+              </h2>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">
+              {filteredPosts.length}개의 모집글이 있어요
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {filteredPosts.length > 0 ? (
+            filteredPosts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: index * 0.04 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div
+                  onClick={() => navigate(`/post/${post.id}`)}
+                  className="cursor-pointer"
+                >
+                  <PostCard post={post} onClick={() => navigate(`/post/${post.id}`)} />
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="py-20 text-center bg-white rounded-[28px] border border-slate-100">
+              <p className="text-slate-500">검색 결과가 없습니다</p>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
+------------------------------------------------------------------------------------------------------------------------home.tsx
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router";
+import { mockPosts } from "../data/mockPosts";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Separator } from "../components/ui/separator";
+import { ParticipationDialog } from "../components/ParticipationDialog";
+import { MatchSuccessDialog } from "../components/MatchSuccessDialog";
+import {
+  ArrowLeft,
+  Users,
+  Target,
+  Trophy,
+  Calendar,
+  User,
+  Lock,
+  Gamepad2,
+  BookOpen,
+  MessageCircle,
+} from "lucide-react";
+import { motion } from "motion/react";
+import { toast } from "sonner";
+
+export function PostDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const [showParticipationDialog, setShowParticipationDialog] = useState(false);
+  const [isMatching, setIsMatching] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  const post = mockPosts.find((p) => p.id === id);
+
+  useEffect(() => {
+    if (!post) navigate("/");
+  }, [post, navigate]);
+
+  if (!post) return null;
+
+  const isFull = post.currentMembers >= post.maxMembers;
+
+  const handleParticipation = (nickname: string) => {
+    setIsMatching(true);
+
+    setTimeout(() => {
+      setIsMatching(false);
+      setShowParticipationDialog(false);
+      toast.success(`${nickname}님, 참여 신청이 완료되었습니다!`);
+
+      setTimeout(() => {
+        setShowSuccessDialog(true);
+      }, 1500);
+    }, 2500);
+  };
+
+  const InfoItem = ({ icon, label, value }: any) => (
+    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl">
+      <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-violet-600">
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs text-slate-400">{label}</p>
+        <p className="text-sm font-bold text-slate-900">{value}</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-28">
+      <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="gap-2 rounded-xl"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            목록
+          </Button>
+
+          <Badge className="rounded-full px-3 py-1 bg-violet-100 text-violet-700 hover:bg-violet-100">
+            {post.category}
+          </Badge>
+        </div>
+      </header>
+
+      <motion.main
+        className="px-5 pt-6"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45 }}
+      >
+        <Card className="overflow-hidden rounded-[32px] border-0 shadow-xl bg-white">
+          <div className="p-6 bg-gradient-to-br from-slate-950 to-violet-800 text-white">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center">
+                {post.category === "게임" ? (
+                  <Gamepad2 className="w-5 h-5" />
+                ) : (
+                  <BookOpen className="w-5 h-5" />
+                )}
+              </div>
+              <span className="text-sm text-white/75">
+                {post.category === "게임" ? post.gameName : post.studyName}
+              </span>
+            </div>
+
+            <h1 className="text-3xl font-black leading-tight">
+              {post.title}
+            </h1>
+
+            <div className="mt-5 flex items-center gap-2 text-sm text-white/80">
+              <Users className="w-4 h-4" />
+              <span>
+                현재 {post.currentMembers}명 / 최대 {post.maxMembers}명
+              </span>
+            </div>
+          </div>
+
+          <div className="p-5">
+            <div className="grid grid-cols-1 gap-3">
+              <InfoItem
+                icon={<User className="w-5 h-5" />}
+                label="작성자"
+                value={post.author}
+              />
+
+              <InfoItem
+                icon={<Trophy className="w-5 h-5" />}
+                label="작성자 티어"
+                value={post.authorTier}
+              />
+
+              <InfoItem
+                icon={<Target className="w-5 h-5" />}
+                label="목표"
+                value={post.targetScore}
+              />
+
+              <InfoItem
+                icon={<Calendar className="w-5 h-5" />}
+                label="작성일"
+                value={post.createdAt}
+              />
+
+              <InfoItem
+                icon={<Lock className="w-5 h-5" />}
+                label="오픈채팅 링크"
+                value="수락 후 공개"
+              />
+            </div>
+
+            <Separator className="my-6" />
+
+            <section>
+              <h2 className="text-lg font-black text-slate-950 mb-3">
+                상세 설명
+              </h2>
+              <p className="text-sm leading-7 text-slate-600">
+                {post.description}
+              </p>
+            </section>
+
+            <section className="mt-6 p-4 rounded-2xl bg-violet-50 border border-violet-100">
+              <div className="flex items-start gap-3">
+                <MessageCircle className="w-5 h-5 text-violet-600 mt-0.5" />
+                <p className="text-sm leading-6 text-violet-800">
+                  참여 신청을 하면 작성자에게 닉네임이 전달되고,
+                  작성자가 수락하면 오픈채팅 링크가 공개됩니다.
+                </p>
+              </div>
+            </section>
+          </div>
+        </Card>
+      </motion.main>
+
+      <div className="fixed bottom-0 left-0 right-0 z-30">
+        <div className="max-w-[480px] mx-auto p-4 bg-white/90 backdrop-blur-md border-t border-slate-100">
+          <Button
+            size="lg"
+            className="w-full h-14 rounded-2xl text-base font-bold bg-violet-600 hover:bg-violet-700"
+            onClick={() => setShowParticipationDialog(true)}
+            disabled={isFull}
+          >
+            {isFull ? "모집 마감" : "참여하기"}
+          </Button>
+        </div>
+      </div>
+
+      <ParticipationDialog
+        open={showParticipationDialog}
+        onOpenChange={setShowParticipationDialog}
+        onSubmit={handleParticipation}
+        isMatching={isMatching}
+      />
+
+      <MatchSuccessDialog
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        openChatLink={post.openChatLink}
+      />
+    </div>
+  );
+}
+------------------------------------------------------------------------------------------------------------------------postdetail.tsx
