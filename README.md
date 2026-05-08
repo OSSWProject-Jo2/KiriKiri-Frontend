@@ -1,6 +1,6 @@
-# 끼리끼리 Vite React 정리본
+# 끼리끼리 nextjs 정리본
 
-붙여준 `Home`, `PostDetail` 코드를 Vite + React Router 기준으로 실행할 수 있게 나눈 구조입니다.
+코드를 next기준으로 실행할 수 있게 나눈 구조입니다.
 
 ## 구조
 
@@ -32,4 +32,4 @@ npm install
 npm run dev
 ```
 
-브라우저에서 Vite가 안내하는 localhost 주소를 열면 됩니다.
+터미널에서 안내하는 localhost 주소를 열면 됩니다.
