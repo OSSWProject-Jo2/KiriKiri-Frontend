@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!post) {
     return {
-      title: "모집글을 찾을 수 없어요 | 끼리끼리",
+      title: "아직 여기엔 아무도 없나봐요!",
     };
   }
 
