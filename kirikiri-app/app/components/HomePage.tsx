@@ -1,97 +1,149 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { mockPosts, type PostCategory } from "../data/mockPosts";
-import { PostCard } from "./PostCard";
-
-type FilterCategory = "전체" | PostCategory;
+import { useState } from "react";
+import Link from "next/link";
+import { mockPosts } from "../data/mockPosts";
+import { PostCard } from "../components/PostCard";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Gamepad2, BookOpen, Sparkles, Search, Flame } from "lucide-react";
+import { motion } from "motion/react";
 
 export function HomePage() {
-  const [selectedCategory, setSelectedCategory] = useState<FilterCategory>("전체");
+  const [selectedCategory, setSelectedCategory] = useState<"전체" | "게임" | "공부">("전체");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredPosts = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+  const filteredPosts = mockPosts.filter((post) => {
+    const matchesCategory =
+      selectedCategory === "전체" || post.category === selectedCategory;
 
-    return mockPosts.filter((post) => {
-      const matchesCategory = selectedCategory === "전체" || post.category === selectedCategory;
-      const matchesSearch =
-        query === "" ||
-        post.title.toLowerCase().includes(query) ||
-        post.gameName?.toLowerCase().includes(query) ||
-        post.studyName?.toLowerCase().includes(query) ||
-        post.description.toLowerCase().includes(query);
+    const matchesSearch =
+      searchQuery === "" ||
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.gameName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.studyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-      return matchesCategory && matchesSearch;
-    });
-  }, [searchQuery, selectedCategory]);
+    return matchesCategory && matchesSearch;
+  });
 
   return (
-    <main className="mobile-app">
-      <header className="home-header">
-        <div className="home-brand" aria-label="끼리끼리">
-          <span aria-hidden="true">✧</span>
-          <h1>끼리끼리</h1>
-          <span aria-hidden="true">✧</span>
-        </div>
-        <p>게임 파티원 &amp; 스터디 그룹 모집</p>
+    <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF]">
+      <header className="px-5 pt-10 pb-6 bg-white rounded-b-[32px] shadow-sm">
+        <motion.div
+          initial={false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="text-center"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <Sparkles className="w-7 h-7 text-violet-500" />
+            <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-500 bg-clip-text text-transparent">
+              끼리끼리
+            </h1>
+            <Sparkles className="w-7 h-7 text-violet-500" />
+          </div>
 
-        <div className="search-field">
-          <span aria-hidden="true">⌕</span>
-          <input
+          <p className="mt-2 text-sm text-slate-500">
+            게임 파티원 & 스터디 그룹 모집
+          </p>
+        </motion.div>
+
+        <motion.div
+          className="mt-7 relative"
+          initial={false}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <Input
             value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="제목, 게임명, 스터디명 검색..."
-            aria-label="모집글 검색"
+            className="h-14 pl-12 rounded-2xl bg-slate-100 border-0 text-base shadow-inner"
           />
-        </div>
+        </motion.div>
 
-        <div className="category-filter" aria-label="카테고리 필터">
-          <button
-            type="button"
-            className={selectedCategory === "전체" ? "active dark" : ""}
+        <motion.div
+          className="grid grid-cols-3 gap-2 mt-4"
+          initial={false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <Button
             onClick={() => setSelectedCategory("전체")}
+            className={`h-12 rounded-2xl ${
+              selectedCategory === "전체"
+                ? "bg-slate-950 text-white"
+                : "bg-white text-slate-700 border border-slate-200"
+            }`}
           >
             전체
-          </button>
-          <button
-            type="button"
-            className={selectedCategory === "게임" ? "active" : ""}
+          </Button>
+
+          <Button
             onClick={() => setSelectedCategory("게임")}
+            className={`h-12 rounded-2xl gap-1.5 ${
+              selectedCategory === "게임"
+                ? "bg-violet-600 text-white"
+                : "bg-white text-slate-700 border border-slate-200"
+            }`}
           >
-            <span aria-hidden="true">🎮</span>
+            <Gamepad2 className="w-4 h-4" />
             게임
-          </button>
-          <button
-            type="button"
-            className={selectedCategory === "공부" ? "active" : ""}
+          </Button>
+
+          <Button
             onClick={() => setSelectedCategory("공부")}
+            className={`h-12 rounded-2xl gap-1.5 ${
+              selectedCategory === "공부"
+                ? "bg-violet-600 text-white"
+                : "bg-white text-slate-700 border border-slate-200"
+            }`}
           >
-            <span aria-hidden="true">📖</span>
+            <BookOpen className="w-4 h-4" />
             공부
-          </button>
-        </div>
+          </Button>
+        </motion.div>
       </header>
 
-      <section className="post-list-section" aria-labelledby="open-party-title">
-        <div className="list-heading">
+      <main className="px-5 py-6">
+        <div className="flex items-end justify-between mb-4">
           <div>
-            <div className="list-title-row">
-              <span aria-hidden="true">♨</span>
-              <h2 id="open-party-title">모집 중인 파티</h2>
+            <div className="flex items-center gap-2">
+              <Flame className="w-5 h-5 text-violet-600" />
+              <h2 className="text-2xl font-black text-slate-950">
+                모집 중인 파티
+              </h2>
             </div>
-            <p>{filteredPosts.length}개의 모집글이 있어요</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {filteredPosts.length}개의 모집글이 있어요
+            </p>
           </div>
         </div>
 
-        <div className="post-list">
+        <div className="space-y-4">
           {filteredPosts.length > 0 ? (
-            filteredPosts.map((post) => <PostCard key={post.id} post={post} />)
+            filteredPosts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                initial={false}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: index * 0.04 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Link href={`/post/${post.id}`} className="block">
+                  <PostCard post={post} />
+                </Link>
+              </motion.div>
+            ))
           ) : (
-            <div className="empty-state">검색 결과가 없습니다</div>
+            <div className="py-20 text-center bg-white rounded-[28px] border border-slate-100">
+              <p className="text-slate-500">검색 결과가 없습니다</p>
+            </div>
           )}
         </div>
-      </section>
-    </main>
+      </main>
+    </div>
   );
 }

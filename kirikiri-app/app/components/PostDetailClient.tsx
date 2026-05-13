@@ -1,36 +1,52 @@
-"use client";
+﻿"use client";
 
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { useState } from "react";
 import type { Post } from "../data/mockPosts";
-import { MatchSuccessDialog } from "./MatchSuccessDialog";
-import { ParticipationDialog } from "./ParticipationDialog";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Separator } from "../components/ui/separator";
+import { ParticipationDialog } from "../components/ParticipationDialog";
+import { MatchSuccessDialog } from "../components/MatchSuccessDialog";
+import {
+  ArrowLeft,
+  Users,
+  Target,
+  Trophy,
+  Calendar,
+  User,
+  Lock,
+  Gamepad2,
+  BookOpen,
+  MessageCircle,
+} from "lucide-react";
+import { motion } from "motion/react";
+import { Toaster, toast } from "sonner";
 
-type PostDetailClientProps = {
-  post: Post;
-};
-
-function InfoItem({
-  icon,
-  label,
-  value,
-}: {
-  icon: string;
+type InfoItemProps = {
+  icon: ReactNode;
   label: string;
   value: string;
-}) {
+};
+
+function InfoItem({ icon, label, value }: InfoItemProps) {
   return (
-    <div className="detail-info-item">
-      <div className="detail-info-icon" aria-hidden="true">
+    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl">
+      <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-violet-600">
         {icon}
       </div>
       <div>
-        <p>{label}</p>
-        <strong>{value}</strong>
+        <p className="text-xs text-slate-400">{label}</p>
+        <p className="text-sm font-bold text-slate-900">{value}</p>
       </div>
     </div>
   );
 }
+
+type PostDetailClientProps = {
+  post: Post;
+};
 
 export function PostDetailClient({ post }: PostDetailClientProps) {
   const [showParticipationDialog, setShowParticipationDialog] = useState(false);
@@ -39,78 +55,137 @@ export function PostDetailClient({ post }: PostDetailClientProps) {
 
   const isFull = post.currentMembers >= post.maxMembers;
 
-  function handleParticipation() {
+  const handleParticipation = (nickname: string) => {
     setIsMatching(true);
 
-    window.setTimeout(() => {
+    setTimeout(() => {
       setIsMatching(false);
       setShowParticipationDialog(false);
-      setShowSuccessDialog(true);
-    }, 900);
-  }
+      toast.success(`${nickname}님, 참여 신청이 완료되었습니다!`);
+
+      setTimeout(() => {
+        setShowSuccessDialog(true);
+      }, 1500);
+    }, 2500);
+  };
 
   return (
-    <main className="mobile-app detail-app">
-      <header className="detail-header">
-        <Link href="/" className="back-button">
-          <span aria-hidden="true">←</span>
-          목록
-        </Link>
-        <span className="detail-category">{post.category}</span>
+    <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-28">
+      <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-transparent px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            목록
+          </Link>
+
+          <Badge className="rounded-full px-3 py-1 bg-violet-100 text-violet-700 hover:bg-violet-100">
+            {post.category}
+          </Badge>
+        </div>
       </header>
 
-      <section className="detail-content">
-        <article className="detail-card">
-          <div className="detail-hero">
-            <div className="detail-kind">
-              <span className="detail-kind-icon" aria-hidden="true">
-                {post.category === "게임" ? "🎮" : "📖"}
+      <motion.main
+        className="px-5 pt-6"
+        initial={false}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45 }}
+      >
+        <Card className="overflow-hidden rounded-[32px] border-0 shadow-xl bg-white">
+          <div className="p-6 bg-gradient-to-br from-slate-950 to-violet-800 text-white">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center">
+                {post.category === "게임" ? (
+                  <Gamepad2 className="w-5 h-5" />
+                ) : (
+                  <BookOpen className="w-5 h-5" />
+                )}
+              </div>
+              <span className="text-sm text-white/75">
+                {post.category === "게임" ? post.gameName : post.studyName}
               </span>
-              <span>{post.category === "게임" ? post.gameName : post.studyName}</span>
             </div>
 
-            <h1>{post.title}</h1>
+            <h1 className="text-3xl font-black leading-tight">{post.title}</h1>
 
-            <div className="detail-members">
-              <span aria-hidden="true">♙</span>
+            <div className="mt-5 flex items-center gap-2 text-sm text-white/80">
+              <Users className="w-4 h-4" />
               <span>
                 현재 {post.currentMembers}명 / 최대 {post.maxMembers}명
               </span>
             </div>
           </div>
 
-          <div className="detail-body">
-            <div className="detail-info-grid">
-              <InfoItem icon="♙" label="작성자" value={post.author} />
-              <InfoItem icon="♕" label="작성자 티어" value={post.authorTier} />
-              <InfoItem icon="◎" label="목표" value={post.targetScore} />
-              <InfoItem icon="▣" label="작성일" value={post.createdAt} />
+          <div className="p-5">
+            <div className="grid grid-cols-1 gap-3">
+              <InfoItem
+                icon={<User className="w-5 h-5" />}
+                label="작성자"
+                value={post.author}
+              />
+
+              <InfoItem
+                icon={<Trophy className="w-5 h-5" />}
+                label="작성자 티어"
+                value={post.authorTier}
+              />
+
+              <InfoItem
+                icon={<Target className="w-5 h-5" />}
+                label="목표"
+                value={post.targetScore}
+              />
+
+              <InfoItem
+                icon={<Calendar className="w-5 h-5" />}
+                label="작성일"
+                value={post.createdAt}
+              />
+
+              <InfoItem
+                icon={<Lock className="w-5 h-5" />}
+                label="오픈채팅 링크"
+                value="수락 후 공개"
+              />
             </div>
 
-            <hr className="detail-separator" />
+            <Separator className="my-6" />
 
-            <section className="detail-description">
-              <h2>상세 설명</h2>
-              <p>{post.description}</p>
+            <section>
+              <h2 className="text-lg font-black text-slate-950 mb-3">
+                상세 설명
+              </h2>
+              <p className="text-sm leading-7 text-slate-600">
+                {post.description}
+              </p>
             </section>
 
-            <section className="notice-box">
-              <span aria-hidden="true">♧</span>
-              <p>참여 신청을 하면 작성자에게 닉네임이 전달되고, 작성자가 수락하면 오픈채팅 링크가 공개됩니다.</p>
+            <section className="mt-6 p-4 rounded-2xl bg-violet-50 border border-violet-100">
+              <div className="flex items-start gap-3">
+                <MessageCircle className="w-5 h-5 text-violet-600 mt-0.5" />
+                <p className="text-sm leading-6 text-violet-800">
+                  참여 신청을 하면 작성자에게 닉네임이 전달되고,
+                  작성자가 수락하면 오픈채팅 링크가 공개됩니다.
+                </p>
+              </div>
             </section>
           </div>
-        </article>
-      </section>
+        </Card>
+      </motion.main>
 
-      <div className="bottom-action">
-        <button
-          type="button"
-          className="join-button"
-          disabled={isFull}
-          onClick={() => setShowParticipationDialog(true)}
-        >
-          {isFull ? "모집 마감" : "참여하기"}
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 z-30">
+        <div className="max-w-[480px] mx-auto p-4 bg-white/90 backdrop-blur-md border-t border-slate-100">
+          <Button
+            size="lg"
+            className="w-full h-14 rounded-2xl text-base font-bold bg-violet-600 hover:bg-violet-700"
+            onClick={() => setShowParticipationDialog(true)}
+            disabled={isFull}
+          >
+            {isFull ? "모집 마감" : "참여하기"}
+          </Button>
+        </div>
       </div>
 
       <ParticipationDialog
@@ -125,6 +200,7 @@ export function PostDetailClient({ post }: PostDetailClientProps) {
         onOpenChange={setShowSuccessDialog}
         openChatLink={post.openChatLink}
       />
-    </main>
+      <Toaster position="top-center" richColors />
+    </div>
   );
 }
