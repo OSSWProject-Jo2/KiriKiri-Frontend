@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { Post } from "../data/mockPosts";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -49,8 +49,6 @@ type PostDetailClientProps = {
 };
 
 export function PostDetailClient({ post }: PostDetailClientProps) {
-  const router = useRouter();
-
   const [showParticipationDialog, setShowParticipationDialog] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -75,15 +73,13 @@ export function PostDetailClient({ post }: PostDetailClientProps) {
     <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-28">
       <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100">
         <div className="px-4 py-3 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/")}
-            className="gap-2 rounded-xl"
+          <Link
+            href="/"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-transparent px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
           >
             <ArrowLeft className="w-4 h-4" />
             목록
-          </Button>
+          </Link>
 
           <Badge className="rounded-full px-3 py-1 bg-violet-100 text-violet-700 hover:bg-violet-100">
             {post.category}
@@ -93,7 +89,7 @@ export function PostDetailClient({ post }: PostDetailClientProps) {
 
       <motion.main
         className="px-5 pt-6"
-        initial={{ opacity: 0, y: 18 }}
+        initial={false}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
       >

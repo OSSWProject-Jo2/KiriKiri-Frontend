@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { mockPosts } from "../data/mockPosts";
 import { PostCard } from "../components/PostCard";
 import { Button } from "../components/ui/button";
@@ -10,7 +10,6 @@ import { Gamepad2, BookOpen, Sparkles, Search, Flame } from "lucide-react";
 import { motion } from "motion/react";
 
 export function HomePage() {
-  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<"전체" | "게임" | "공부">("전체");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -32,7 +31,7 @@ export function HomePage() {
     <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF]">
       <header className="px-5 pt-10 pb-6 bg-white rounded-b-[32px] shadow-sm">
         <motion.div
-          initial={{ opacity: 0, y: -18 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
           className="text-center"
@@ -52,7 +51,7 @@ export function HomePage() {
 
         <motion.div
           className="mt-7 relative"
-          initial={{ opacity: 0, scale: 0.96 }}
+          initial={false}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
@@ -67,7 +66,7 @@ export function HomePage() {
 
         <motion.div
           className="grid grid-cols-3 gap-2 mt-4"
-          initial={{ opacity: 0, y: 12 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
@@ -128,17 +127,14 @@ export function HomePage() {
             filteredPosts.map((post, index) => (
               <motion.div
                 key={post.id}
-                initial={{ opacity: 0, y: 18 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: index * 0.04 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div
-                  onClick={() => router.push(`/post/${post.id}`)}
-                  className="cursor-pointer"
-                >
-                  <PostCard post={post} onClick={() => router.push(`/post/${post.id}`)} />
-                </div>
+                <Link href={`/post/${post.id}`} className="block">
+                  <PostCard post={post} />
+                </Link>
               </motion.div>
             ))
           ) : (
