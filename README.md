@@ -1,35 +1,31 @@
-# 끼리끼리 nextjs 정리본
+# KiriKiri Frontend
 
-코드를 next기준으로 실행할 수 있게 나눈 구조입니다.
+Next.js 기반 프론트엔드입니다.
+
+## 실행
+
+루트에서 실행해도 `kirikiri-app`의 Next.js 명령으로 위임됩니다.
+
+```bash
+npm run dev
+npm run build
+```
+
+직접 실행하려면:
+
+```bash
+cd kirikiri-app
+npm run dev
+npm run build
+```
 
 ## 구조
 
 ```txt
-src/
-  main.tsx
-  App.tsx
-  pages/
-    Home.tsx
-    PostDetail.tsx
-  components/
-    PostCard.tsx
-    ParticipationDialog.tsx
-    MatchSuccessDialog.tsx
-    ui/
-      badge.tsx
-      button.tsx
-      card.tsx
-      input.tsx
-      separator.tsx
-  data/
-    mockPosts.ts
+kirikiri-app/
+  app/
+    page.tsx
+    post/[id]/page.tsx
+    components/
+    data/
 ```
-
-## 실행
-
-```bash
-npm install
-npm run dev
-```
-
-터미널에서 안내하는 localhost 주소를 열면 됩니다.
