@@ -63,3 +63,7 @@ export const mockPosts: Post[] = [
     gameName: "발로란트",
   },
 ];
+
+export function getPostById(id: string) {
+  return mockPosts.find((post) => post.id === id);
+}
