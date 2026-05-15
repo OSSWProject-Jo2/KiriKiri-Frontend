@@ -28,15 +28,15 @@ export function ParticipationDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 px-4 pb-5">
       <div className="w-full max-w-[448px] rounded-[28px] bg-white p-5 shadow-2xl">
-        <h2 className="text-xl font-black text-slate-950">ì°¸ì—¬ ?‹ ì²?</h2>
+        <h2 className="text-xl font-black text-slate-950">ì°¸ì—¬ ì‹ ì²­</h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          ?ž‘?„±?ž?—ê²? ? „?‹¬?•  ?‹‰?„¤?ž„?„ ?ž…? ¥?•´ì£¼ì„¸?š”.
+          ìž‘ì„±ìžì—ê²Œ ì „ë‹¬í•  ë‹‰ë„¤ìž„ì„ ìž…ë ¥í•´ì£¼ì„¸ìš”.
         </p>
 
         <Input
           value={nickname}
           onChange={(event) => setNickname(event.target.value)}
-          placeholder="?‹‰?„¤?ž„"
+          placeholder="ë‹‰ë„¤ìž„"
           className="mt-5 h-14 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base"
           disabled={isMatching}
         />
@@ -55,7 +55,7 @@ export function ParticipationDialog({
             onClick={handleSubmit}
             disabled={isMatching || nickname.trim() === ""}
           >
-            {isMatching ? "?‹ ì²? ì¤?..." : "?‹ ì²??•˜ê¸?"}
+            {isMatching ? "ì‹ ì²­ ì¤‘..." : "ì‹ ì²­í•˜ê¸°"}
           </Button>
         </div>
       </div>
