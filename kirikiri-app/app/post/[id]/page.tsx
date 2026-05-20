@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { PostDetailClient } from "../../components/PostDetailClient";
 import { getPostById, mockPosts } from "../../data/mockPosts";
 
@@ -21,12 +20,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!post) {
     return {
-      title: "아직 여기엔 아무도 없나봐요!",
+      title: "모집글 | 키리키리",
     };
   }
 
   return {
-    title: `${post.title} | 끼리끼리`,
+    title: `${post.title} | 키리키리`,
     description: post.description,
   };
 }
@@ -35,9 +34,5 @@ export default async function PostDetailPage({ params }: PageProps) {
   const { id } = await params;
   const post = getPostById(id);
 
-  if (!post) {
-    notFound();
-  }
-
-  return <PostDetailClient post={post} />;
+  return <PostDetailClient post={post} postId={id} />;
 }

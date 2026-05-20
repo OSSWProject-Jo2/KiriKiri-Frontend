@@ -1,8 +1,9 @@
 ﻿"use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { Post } from "../data/mockPosts";
+import { getSavedPostById } from "../data/postStorage";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -17,8 +18,7 @@ import {
   Calendar,
   User,
   Lock,
-  Gamepad2,
-  BookOpen,
+  Sparkles,
   MessageCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -45,15 +45,73 @@ function InfoItem({ icon, label, value }: InfoItemProps) {
 }
 
 type PostDetailClientProps = {
-  post: Post;
+  post?: Post;
+  postId?: string;
 };
 
-export function PostDetailClient({ post }: PostDetailClientProps) {
+export function PostDetailClient({ post: initialPost, postId }: PostDetailClientProps) {
+  const [post, setPost] = useState<Post | undefined>(initialPost);
+  const [hasCheckedSavedPost, setHasCheckedSavedPost] = useState(
+    Boolean(initialPost),
+  );
   const [showParticipationDialog, setShowParticipationDialog] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
+  useEffect(() => {
+    if (initialPost || !postId) {
+      return;
+    }
+
+    const loadSavedPost = window.setTimeout(() => {
+      setPost(getSavedPostById(postId));
+      setHasCheckedSavedPost(true);
+    }, 0);
+
+    return () => window.clearTimeout(loadSavedPost);
+  }, [initialPost, postId]);
+
+  if (!post && !hasCheckedSavedPost) {
+    return (
+      <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] px-5 py-10">
+        <Link
+          href="/"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          목록
+        </Link>
+        <div className="mt-24 rounded-[28px] bg-white p-8 text-center shadow-sm">
+          <p className="text-sm font-bold text-slate-500">모집글을 불러오는 중</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] px-5 py-10">
+        <Link
+          href="/"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          목록
+        </Link>
+        <div className="mt-24 rounded-[28px] bg-white p-8 text-center shadow-sm">
+          <h1 className="text-2xl font-black text-slate-950">
+            모집글을 찾을 수 없어요
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            삭제되었거나 현재 브라우저에 저장되지 않은 글입니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const isFull = post.currentMembers >= post.maxMembers;
+  const topicLabel = post.topicName || post.gameName || post.studyName || post.category;
 
   const handleParticipation = (nickname: string) => {
     setIsMatching(true);
@@ -97,15 +155,9 @@ export function PostDetailClient({ post }: PostDetailClientProps) {
           <div className="p-6 bg-gradient-to-br from-slate-950 to-violet-800 text-white">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center">
-                {post.category === "게임" ? (
-                  <Gamepad2 className="w-5 h-5" />
-                ) : (
-                  <BookOpen className="w-5 h-5" />
-                )}
+                <Sparkles className="w-5 h-5" />
               </div>
-              <span className="text-sm text-white/75">
-                {post.category === "게임" ? post.gameName : post.studyName}
-              </span>
+              <span className="text-sm text-white/75">{topicLabel}</span>
             </div>
 
             <h1 className="text-3xl font-black leading-tight">{post.title}</h1>
