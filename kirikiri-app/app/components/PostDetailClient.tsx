@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { Post } from "../data/mockPosts";
 import { getSavedPostById } from "../data/postStorage";
@@ -51,16 +51,43 @@ type PostDetailClientProps = {
 };
 
 export function PostDetailClient({ post: initialPost, postId }: PostDetailClientProps) {
-  const [post] = useState<Post | undefined>(() => {
-    if (initialPost) {
-      return initialPost;
-    }
-
-    return postId ? getSavedPostById(postId) : undefined;
-  });
+  const [post, setPost] = useState<Post | undefined>(initialPost);
+  const [hasCheckedSavedPost, setHasCheckedSavedPost] = useState(
+    Boolean(initialPost),
+  );
   const [showParticipationDialog, setShowParticipationDialog] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  useEffect(() => {
+    if (initialPost || !postId) {
+      return;
+    }
+
+    const loadSavedPost = window.setTimeout(() => {
+      setPost(getSavedPostById(postId));
+      setHasCheckedSavedPost(true);
+    }, 0);
+
+    return () => window.clearTimeout(loadSavedPost);
+  }, [initialPost, postId]);
+
+  if (!post && !hasCheckedSavedPost) {
+    return (
+      <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] px-5 py-10">
+        <Link
+          href="/"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          목록
+        </Link>
+        <div className="mt-24 rounded-[28px] bg-white p-8 text-center shadow-sm">
+          <p className="text-sm font-bold text-slate-500">모집글을 불러오는 중</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!post) {
     return (
