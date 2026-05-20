@@ -18,8 +18,7 @@ import {
   Calendar,
   User,
   Lock,
-  Gamepad2,
-  BookOpen,
+  Sparkles,
   MessageCircle,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -112,6 +111,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   }
 
   const isFull = post.currentMembers >= post.maxMembers;
+  const topicLabel = post.topicName || post.gameName || post.studyName || post.category;
 
   const handleParticipation = (nickname: string) => {
     setIsMatching(true);
@@ -155,15 +155,9 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
           <div className="p-6 bg-gradient-to-br from-slate-950 to-violet-800 text-white">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center">
-                {post.category === "게임" ? (
-                  <Gamepad2 className="w-5 h-5" />
-                ) : (
-                  <BookOpen className="w-5 h-5" />
-                )}
+                <Sparkles className="w-5 h-5" />
               </div>
-              <span className="text-sm text-white/75">
-                {post.category === "게임" ? post.gameName : post.studyName}
-              </span>
+              <span className="text-sm text-white/75">{topicLabel}</span>
             </div>
 
             <h1 className="text-3xl font-black leading-tight">{post.title}</h1>

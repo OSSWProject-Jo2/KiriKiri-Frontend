@@ -1,10 +1,9 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, BookOpen, Gamepad2, Send } from "lucide-react";
-import type { PostCategory } from "../data/mockPosts";
+import { ArrowLeft, Send } from "lucide-react";
 import { savePost } from "../data/postStorage";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -20,42 +19,32 @@ function todayText() {
 
 export function NewPostForm() {
   const router = useRouter();
-  const [category, setCategory] = useState<PostCategory>("게임");
+  const [category, setCategory] = useState("");
+  const [topicName, setTopicName] = useState("");
   const [title, setTitle] = useState("");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [author, setAuthor] = useState("");
-  const [authorTier, setAuthorTier] = useState("");
   const [targetScore, setTargetScore] = useState("");
   const [maxMembers, setMaxMembers] = useState(5);
+  const [description, setDescription] = useState("");
   const [openChatLink, setOpenChatLink] = useState("");
-
-  const categoryNameLabel = useMemo(
-    () => (category === "게임" ? "게임명" : "스터디명"),
-    [category],
-  );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const trimmedName = name.trim();
-    const post = {
+    savePost({
       id: `local-${Date.now()}`,
-      category,
+      category: category.trim(),
       title: title.trim(),
       description: description.trim(),
-      author: author.trim(),
-      authorTier: authorTier.trim() || "새 멤버",
+      author: "익명",
+      authorTier: "새 멤버",
       currentMembers: 1,
       maxMembers,
       targetScore: targetScore.trim(),
       createdAt: todayText(),
       openChatLink: openChatLink.trim(),
-      gameName: category === "게임" ? trimmedName : undefined,
-      studyName: category === "공부" ? trimmedName : undefined,
-    };
+      topicName: topicName.trim(),
+    });
 
-    savePost(post);
     router.push("/");
   };
 
@@ -75,110 +64,49 @@ export function NewPostForm() {
       </header>
 
       <main className="px-5 py-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <section className="rounded-[28px] bg-white p-5 shadow-sm border border-slate-100">
-            <h1 className="text-2xl font-black text-slate-950">
-              새 모집글 만들기
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              필요한 정보를 채우면 홈 목록에 바로 추가됩니다.
-            </p>
-
-            <div className="grid grid-cols-2 gap-2 mt-5">
-              <Button
-                type="button"
-                onClick={() => setCategory("게임")}
-                className={`h-12 rounded-2xl gap-1.5 ${
-                  category === "게임"
-                    ? "bg-violet-600 text-white"
-                    : "bg-slate-50 text-slate-700 border border-slate-200"
-                }`}
-              >
-                <Gamepad2 className="w-4 h-4" />
-                게임
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setCategory("공부")}
-                className={`h-12 rounded-2xl gap-1.5 ${
-                  category === "공부"
-                    ? "bg-violet-600 text-white"
-                    : "bg-slate-50 text-slate-700 border border-slate-200"
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-                공부
-              </Button>
+        <form onSubmit={handleSubmit}>
+          <section className="space-y-4 rounded-[28px] bg-white p-5 shadow-sm border border-slate-100">
+            <div>
+              <h1 className="text-2xl font-black text-slate-950">
+                새 모집글 만들기
+              </h1>
+              <p className="mt-1 text-sm text-slate-500">
+                분야를 자유롭게 적고, 함께할 사람을 모집해 보세요.
+              </p>
             </div>
-          </section>
 
-          <section className="space-y-3 rounded-[28px] bg-white p-5 shadow-sm border border-slate-100">
             <label className="block">
               <span className="text-sm font-bold text-slate-700">제목</span>
               <Input
                 required
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder={
-                  category === "게임" ? "예: 같이 랭크 올릴 파티 구해요" : "예: 같이 스터디할 분 구해요"
-                }
+                placeholder="예: 같이 꾸준히 할 분 구해요"
                 className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-bold text-slate-700">
-                {categoryNameLabel}
-              </span>
+              <span className="text-sm font-bold text-slate-700">분야</span>
               <Input
                 required
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder={
-                  category === "게임" ? "예: 리그 오브 레전드" : "예: 정보처리기사"
-                }
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+                placeholder="예: 게임, 공부, 운동, 여행, 프로젝트"
                 className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-bold text-slate-700">상세 설명</span>
-              <textarea
+              <span className="text-sm font-bold text-slate-700">모임명</span>
+              <Input
                 required
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="모집 조건, 진행 시간, 원하는 분위기를 적어주세요"
-                rows={5}
-                className="mt-2 w-full resize-none rounded-2xl bg-slate-100 border-0 px-4 py-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-violet-300"
+                value={topicName}
+                onChange={(event) => setTopicName(event.target.value)}
+                placeholder="예: 리그 오브 레전드, 정보처리기사, 한강 러닝"
+                className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>
-          </section>
-
-          <section className="space-y-3 rounded-[28px] bg-white p-5 shadow-sm border border-slate-100">
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">작성자</span>
-                <Input
-                  required
-                  value={author}
-                  onChange={(event) => setAuthor(event.target.value)}
-                  placeholder="닉네임"
-                  className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">
-                  티어/레벨
-                </span>
-                <Input
-                  value={authorTier}
-                  onChange={(event) => setAuthorTier(event.target.value)}
-                  placeholder="골드 II"
-                  className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
-                />
-              </label>
-            </div>
 
             <label className="block">
               <span className="text-sm font-bold text-slate-700">목표</span>
@@ -186,7 +114,7 @@ export function NewPostForm() {
                 required
                 value={targetScore}
                 onChange={(event) => setTargetScore(event.target.value)}
-                placeholder={category === "게임" ? "예: 플래티넘" : "예: 필기 합격"}
+                placeholder="예: 플래티넘, 필기 합격, 5km 완주"
                 className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>
@@ -205,6 +133,18 @@ export function NewPostForm() {
             </label>
 
             <label className="block">
+              <span className="text-sm font-bold text-slate-700">상세 설명</span>
+              <textarea
+                required
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="모집 조건, 진행 시간, 원하는 분위기를 적어주세요"
+                rows={5}
+                className="mt-2 w-full resize-none rounded-2xl bg-slate-100 border-0 px-4 py-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-violet-300"
+              />
+            </label>
+
+            <label className="block">
               <span className="text-sm font-bold text-slate-700">
                 오픈채팅 링크
               </span>
@@ -219,7 +159,7 @@ export function NewPostForm() {
             </label>
           </section>
 
-          <div className="sticky bottom-0 -mx-5 px-5 py-4 bg-white/90 backdrop-blur-md border-t border-slate-100">
+          <div className="sticky bottom-0 -mx-5 mt-4 px-5 py-4 bg-white/90 backdrop-blur-md border-t border-slate-100">
             <Button
               type="submit"
               size="lg"

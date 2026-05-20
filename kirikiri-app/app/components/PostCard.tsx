@@ -1,4 +1,4 @@
-import { BookOpen, Gamepad2, Lock, Users } from "lucide-react";
+import { Lock, Sparkles, Users } from "lucide-react";
 import type { Post } from "../data/mockPosts";
 
 type PostCardProps = {
@@ -6,9 +6,11 @@ type PostCardProps = {
   onClick?: () => void;
 };
 
-export function PostCard({ post, onClick }: PostCardProps) {
-  const label = post.category === "게임" ? post.gameName : post.studyName;
+function getTopicLabel(post: Post) {
+  return post.topicName || post.gameName || post.studyName || post.category;
+}
 
+export function PostCard({ post, onClick }: PostCardProps) {
   return (
     <article
       onClick={onClick}
@@ -17,12 +19,8 @@ export function PostCard({ post, onClick }: PostCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-bold text-violet-600">
-            {post.category === "게임" ? (
-              <Gamepad2 className="w-4 h-4" />
-            ) : (
-              <BookOpen className="w-4 h-4" />
-            )}
-            <span>{label}</span>
+            <Sparkles className="w-4 h-4" />
+            <span>{getTopicLabel(post)}</span>
           </div>
           <h3 className="mt-3 text-lg font-black leading-snug text-slate-950">
             {post.title}
