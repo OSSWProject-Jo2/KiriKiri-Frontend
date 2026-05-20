@@ -159,9 +159,9 @@ export function HomePage() {
             href="/post/new"
             aria-label="모집글 작성"
             title="모집글 작성"
-            className="pointer-events-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-violet-600 text-white shadow-2xl shadow-violet-300 transition hover:bg-violet-700 active:scale-95"
+            className="pointer-events-auto inline-flex h-16 w-16 items-center justify-center rounded-full border-2 border-transparent bg-[linear-gradient(white,white),linear-gradient(to_right,#6d28d9,#a93bd1)] bg-origin-border bg-clip-padding shadow-2xl shadow-violet-200 transition hover:shadow-violet-300 active:scale-95"
           >
-            <Plus className="h-8 w-8" />
+            <Plus className="h-8 w-8 text-purple-600" />
           </Link>
         </div>
       </div>
