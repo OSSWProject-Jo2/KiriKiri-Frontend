@@ -4,8 +4,6 @@ Next.js 기반 프론트엔드입니다.
 
 ## 실행
 
-루트에서 실행해도 `kirikiri-app`의 Next.js 명령으로 위임됩니다.
-
 ```bash
 npm run dev
 npm run build
