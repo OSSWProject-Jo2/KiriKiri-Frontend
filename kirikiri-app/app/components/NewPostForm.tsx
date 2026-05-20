@@ -3,8 +3,9 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, LogIn, Send } from "lucide-react";
 import { savePost } from "../data/postStorage";
+import { useAuth } from "./auth/ClerkAuthProvider";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
@@ -19,6 +20,7 @@ function todayText() {
 
 export function NewPostForm() {
   const router = useRouter();
+  const { isLoaded, isSignedIn, nickname, openSignIn } = useAuth();
   const [category, setCategory] = useState("");
   const [topicName, setTopicName] = useState("");
   const [title, setTitle] = useState("");
@@ -30,12 +32,17 @@ export function NewPostForm() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
+
     savePost({
       id: `local-${Date.now()}`,
       category: category.trim(),
       title: title.trim(),
       description: description.trim(),
-      author: "익명",
+      author: nickname || "익명",
       authorTier: "새 멤버",
       currentMembers: 1,
       maxMembers,
@@ -47,6 +54,37 @@ export function NewPostForm() {
 
     router.push("/");
   };
+
+  if (isLoaded && !isSignedIn) {
+    return (
+      <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] px-5 py-10">
+        <Link
+          href="/"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          목록
+        </Link>
+
+        <div className="mt-20 rounded-[28px] bg-white p-6 text-center shadow-sm border border-slate-100">
+          <h1 className="text-2xl font-black text-slate-950">
+            로그인이 필요해요
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            모집글을 작성하려면 먼저 로그인해 주세요.
+          </p>
+          <Button
+            type="button"
+            onClick={openSignIn}
+            className="mt-5 h-12 rounded-2xl gap-2 bg-violet-600 px-5 text-white hover:bg-violet-700"
+          >
+            <LogIn className="h-4 w-4" />
+            로그인
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF]">

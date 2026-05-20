@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { ClerkAuthProvider } from "./components/auth/ClerkAuthProvider";
+import { NicknameDialog } from "./components/auth/NicknameDialog";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "끼리끼리 | 게임 파티원 & 스터디 그룹 모집",
-  description: "게임 파티원과 스터디 그룹을 모집하는 끼리끼리 앱",
+  title: "키리키리 | 모임 모집",
+  description: "함께할 사람을 찾고 모임을 모집하는 키리키리 앱",
 };
 
 export default function RootLayout({
@@ -13,7 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ClerkAuthProvider>
+          {children}
+          <NicknameDialog />
+        </ClerkAuthProvider>
+      </body>
     </html>
   );
 }

@@ -2,20 +2,26 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { mockPosts } from "../data/mockPosts";
 import { getSavedPosts } from "../data/postStorage";
 import { PostCard } from "../components/PostCard";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Flame, Plus, Search, Sparkles } from "lucide-react";
+import { LoginRequiredDialog } from "./auth/LoginRequiredDialog";
+import { useAuth } from "./auth/ClerkAuthProvider";
+import { Flame, LogIn, LogOut, Plus, Search, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 
 const ALL_CATEGORIES = "전체";
 
 export function HomePage() {
+  const router = useRouter();
+  const { isLoaded, isSignedIn, nickname, openSignIn, signOut } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES);
   const [searchQuery, setSearchQuery] = useState("");
   const [savedPosts, setSavedPosts] = useState<typeof mockPosts>([]);
+  const [showLoginRequired, setShowLoginRequired] = useState(false);
 
   useEffect(() => {
     const loadSavedPosts = window.setTimeout(() => {
@@ -27,7 +33,10 @@ export function HomePage() {
 
   const posts = useMemo(() => [...savedPosts, ...mockPosts], [savedPosts]);
   const categories = useMemo(
-    () => [ALL_CATEGORIES, ...Array.from(new Set(posts.map((post) => post.category)))],
+    () => [
+      ALL_CATEGORIES,
+      ...Array.from(new Set(posts.map((post) => post.category))),
+    ],
     [posts],
   );
 
@@ -47,14 +56,54 @@ export function HomePage() {
     return matchesCategory && matchesSearch;
   });
 
+  const handleCreatePost = () => {
+    if (!isLoaded) {
+      return;
+    }
+
+    if (!isSignedIn) {
+      setShowLoginRequired(true);
+      return;
+    }
+
+    router.push("/post/new");
+  };
+
   return (
     <div className="relative min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-24">
-      <header className="px-5 pt-10 pb-6 bg-white rounded-b-[32px] shadow-sm">
+      <header className="px-5 pt-8 pb-6 bg-white rounded-b-[32px] shadow-sm">
+        <div className="flex items-center justify-end">
+          {isSignedIn ? (
+            <div className="flex items-center gap-2">
+              <span className="max-w-[170px] truncate text-sm font-bold text-slate-700">
+                {nickname || "로그인됨"}
+              </span>
+              <Button
+                type="button"
+                onClick={() => void signOut()}
+                className="h-10 rounded-2xl gap-1.5 bg-slate-100 px-3 text-slate-700 hover:bg-slate-200"
+              >
+                <LogOut className="h-4 w-4" />
+                로그아웃
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              onClick={openSignIn}
+              className="h-10 rounded-2xl gap-1.5 bg-violet-600 px-3 text-white hover:bg-violet-700"
+            >
+              <LogIn className="h-4 w-4" />
+              로그인
+            </Button>
+          )}
+        </div>
+
         <motion.div
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
-          className="text-center"
+          className="mt-5 text-center"
         >
           <div className="flex items-center justify-center gap-2">
             <Sparkles className="w-7 h-7 text-violet-500" />
@@ -146,16 +195,22 @@ export function HomePage() {
 
       <div className="fixed bottom-6 left-0 right-0 z-40 pointer-events-none">
         <div className="max-w-[480px] mx-auto px-5 flex justify-end">
-          <Link
-            href="/post/new"
+          <button
+            type="button"
+            onClick={handleCreatePost}
             aria-label="모집글 작성"
             title="모집글 작성"
             className="pointer-events-auto inline-flex h-18 w-18 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg shadow-violet-600/30 transition hover:bg-violet-700 hover:scale-105 active:scale-90"
           >
             <Plus className="h-8 w-8" />
-          </Link>
+          </button>
         </div>
       </div>
+
+      <LoginRequiredDialog
+        open={showLoginRequired}
+        onOpenChange={setShowLoginRequired}
+      />
     </div>
   );
 }
