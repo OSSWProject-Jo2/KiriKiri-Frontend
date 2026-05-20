@@ -23,7 +23,7 @@ export const mockPosts: Post[] = [
     title: "롤 자유랭 같이 올릴 파티 구해요",
     description:
       "저녁 시간대에 꾸준히 같이 할 분들을 찾습니다. 분위기 좋게 피드백하면서 목표 티어까지 같이 올라가요.",
-    author: "소환사A",
+    author: "파티장",
     authorTier: "골드 II",
     currentMembers: 3,
     maxMembers: 5,
@@ -35,14 +35,14 @@ export const mockPosts: Post[] = [
   {
     id: "2",
     category: "공부",
-    title: "정보처리기사 실기 스터디 모집",
+    title: "정보처리기사 필기 스터디 모집",
     description:
-      "기출 풀이와 오답 정리를 같이 할 스터디원을 모집합니다. 주 3회 온라인으로 진행할 예정입니다.",
+      "기출 문제와 오답 정리를 같이 할 스터디원을 모집합니다. 주 3회 온라인으로 진행할 예정입니다.",
     author: "스터디장",
     authorTier: "꾸준함 Lv.8",
     currentMembers: 4,
     maxMembers: 6,
-    targetScore: "실기 합격",
+    targetScore: "필기 합격",
     createdAt: "2026.05.05",
     openChatLink: "https://open.kakao.com/o/example2",
     studyName: "정보처리기사",
@@ -50,9 +50,9 @@ export const mockPosts: Post[] = [
   {
     id: "3",
     category: "게임",
-    title: "발로란트 경쟁전 듀오/스쿼드",
+    title: "발로란트 경쟁전 같이 하실 분",
     description:
-      "마이크 가능하고 매너 있게 플레이하실 분이면 좋겠습니다. 초보도 환영합니다.",
+      "마이크 가능하고 매너 있게 플레이할 분이면 좋겠습니다. 초보도 환영합니다.",
     author: "에임연습중",
     authorTier: "실버 III",
     currentMembers: 2,

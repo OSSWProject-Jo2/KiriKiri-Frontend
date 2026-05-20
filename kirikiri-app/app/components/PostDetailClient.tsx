@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { Post } from "../data/mockPosts";
+import { getSavedPostById } from "../data/postStorage";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -45,13 +46,43 @@ function InfoItem({ icon, label, value }: InfoItemProps) {
 }
 
 type PostDetailClientProps = {
-  post: Post;
+  post?: Post;
+  postId?: string;
 };
 
-export function PostDetailClient({ post }: PostDetailClientProps) {
+export function PostDetailClient({ post: initialPost, postId }: PostDetailClientProps) {
+  const [post] = useState<Post | undefined>(() => {
+    if (initialPost) {
+      return initialPost;
+    }
+
+    return postId ? getSavedPostById(postId) : undefined;
+  });
   const [showParticipationDialog, setShowParticipationDialog] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  if (!post) {
+    return (
+      <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] px-5 py-10">
+        <Link
+          href="/"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          목록
+        </Link>
+        <div className="mt-24 rounded-[28px] bg-white p-8 text-center shadow-sm">
+          <h1 className="text-2xl font-black text-slate-950">
+            모집글을 찾을 수 없어요
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            삭제되었거나 현재 브라우저에 저장되지 않은 글입니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const isFull = post.currentMembers >= post.maxMembers;
 

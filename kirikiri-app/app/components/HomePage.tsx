@@ -1,34 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { mockPosts } from "../data/mockPosts";
+import { mockPosts, type PostCategory } from "../data/mockPosts";
+import { getSavedPosts } from "../data/postStorage";
 import { PostCard } from "../components/PostCard";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Gamepad2, BookOpen, Sparkles, Search, Flame } from "lucide-react";
+import { BookOpen, Flame, Gamepad2, Plus, Search, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 
-export function HomePage() {
-  const [selectedCategory, setSelectedCategory] = useState<"전체" | "게임" | "공부">("전체");
-  const [searchQuery, setSearchQuery] = useState("");
+type CategoryFilter = "전체" | PostCategory;
 
-  const filteredPosts = mockPosts.filter((post) => {
+export function HomePage() {
+  const [selectedCategory, setSelectedCategory] =
+    useState<CategoryFilter>("전체");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [savedPosts] = useState(getSavedPosts);
+
+  const posts = useMemo(() => [...savedPosts, ...mockPosts], [savedPosts]);
+
+  const filteredPosts = posts.filter((post) => {
     const matchesCategory =
       selectedCategory === "전체" || post.category === selectedCategory;
 
+    const loweredQuery = searchQuery.toLowerCase();
     const matchesSearch =
       searchQuery === "" ||
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.gameName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.studyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.description.toLowerCase().includes(searchQuery.toLowerCase());
+      post.title.toLowerCase().includes(loweredQuery) ||
+      post.gameName?.toLowerCase().includes(loweredQuery) ||
+      post.studyName?.toLowerCase().includes(loweredQuery) ||
+      post.description.toLowerCase().includes(loweredQuery);
 
     return matchesCategory && matchesSearch;
   });
 
   return (
-    <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF]">
+    <div className="relative min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-24">
       <header className="px-5 pt-10 pb-6 bg-white rounded-b-[32px] shadow-sm">
         <motion.div
           initial={false}
@@ -39,13 +47,13 @@ export function HomePage() {
           <div className="flex items-center justify-center gap-2">
             <Sparkles className="w-7 h-7 text-violet-500" />
             <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-500 bg-clip-text text-transparent">
-              끼리끼리
+              키리키리
             </h1>
             <Sparkles className="w-7 h-7 text-violet-500" />
           </div>
 
           <p className="mt-2 text-sm text-slate-500">
-            게임 파티원 & 스터디 그룹 모집
+            게임 파티와 스터디 그룹 모집
           </p>
         </motion.div>
 
@@ -144,6 +152,19 @@ export function HomePage() {
           )}
         </div>
       </main>
+
+      <div className="fixed bottom-6 left-0 right-0 z-40 pointer-events-none">
+        <div className="max-w-[480px] mx-auto px-5 flex justify-end">
+          <Link
+            href="/post/new"
+            aria-label="모집글 작성"
+            title="모집글 작성"
+            className="pointer-events-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-violet-600 text-white shadow-2xl shadow-violet-300 transition hover:bg-violet-700 active:scale-95"
+          >
+            <Plus className="h-8 w-8" />
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
