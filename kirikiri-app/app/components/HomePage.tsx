@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { mockPosts, type PostCategory } from "../data/mockPosts";
 import { getSavedPosts } from "../data/postStorage";
@@ -16,7 +16,11 @@ export function HomePage() {
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryFilter>("전체");
   const [searchQuery, setSearchQuery] = useState("");
-  const [savedPosts] = useState(getSavedPosts);
+  const [savedPosts, setSavedPosts] = useState<typeof mockPosts>([]);
+
+  useEffect(() => {
+    setSavedPosts(getSavedPosts());
+  }, []);
 
   const posts = useMemo(() => [...savedPosts, ...mockPosts], [savedPosts]);
 
