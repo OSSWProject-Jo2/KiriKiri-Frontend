@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { mockPosts, type PostCategory } from "../data/mockPosts";
 import { getSavedPosts } from "../data/postStorage";
@@ -16,11 +16,7 @@ export function HomePage() {
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryFilter>("전체");
   const [searchQuery, setSearchQuery] = useState("");
-  const [savedPosts, setSavedPosts] = useState<typeof mockPosts>([]);
-
-  useEffect(() => {
-    setSavedPosts(getSavedPosts());
-  }, []);
+  const [savedPosts] = useState(getSavedPosts);
 
   const posts = useMemo(() => [...savedPosts, ...mockPosts], [savedPosts]);
 
@@ -163,9 +159,9 @@ export function HomePage() {
             href="/post/new"
             aria-label="모집글 작성"
             title="모집글 작성"
-            className="pointer-events-auto inline-flex h-16 w-16 items-center justify-center rounded-full border-2 border-transparent bg-[linear-gradient(white,white),linear-gradient(to_right,#6d28d9,#a93bd1)] bg-origin-border bg-clip-padding shadow-2xl shadow-violet-200 transition hover:shadow-violet-300 active:scale-95"
-          >
-            <Plus className="h-8 w-8 text-purple-600" />
+            className="pointer-events-auto inline-flex h-18 w-18 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg shadow-violet-600/30 transition hover:bg-violet-700 hover:scale-105 active:scale-90"
+            >
+                <Plus className="h-8 w-8" />
           </Link>
         </div>
       </div>
