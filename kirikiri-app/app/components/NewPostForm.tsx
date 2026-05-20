@@ -119,7 +119,9 @@ export function NewPostForm() {
                 required
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="예: 같이 랭크 올릴 파티 구해요"
+                placeholder={
+                  category === "게임" ? "예: 같이 랭크 올릴 파티 구해요" : "예: 같이 스터디할 분 구해요"
+                }
                 className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>
