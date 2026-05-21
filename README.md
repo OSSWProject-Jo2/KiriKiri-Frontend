@@ -32,7 +32,7 @@ kirikiri-app/
   app/
     data/
     post/
-    sing-in/
+    sign-in/
     globals.css
     layout.tsx
     page.tsx
