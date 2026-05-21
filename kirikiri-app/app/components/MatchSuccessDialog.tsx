@@ -17,7 +17,7 @@ export function MatchSuccessDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 px-4 pb-5">
       <div className="w-full max-w-[448px] rounded-[28px] bg-white p-5 shadow-2xl">
-        <h2 className="text-xl font-black text-slate-950">매칭 성공</h2>
+        <h2 className="text-xl font-black text-slate-950">매칭 성공!</h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
           작성자가 참여 신청을 수락했습니다. 오픈채팅 링크로 이동해보세요.
         </p>

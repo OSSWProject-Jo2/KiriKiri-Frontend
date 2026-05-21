@@ -130,7 +130,7 @@ export function NewPostForm() {
                 required
                 value={category}
                 onChange={(event) => setCategory(event.target.value)}
-                placeholder="예: 게임, 공부, 운동, 여행, 프로젝트"
+                placeholder="예: 게임, 공부, 운동..."
                 className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>

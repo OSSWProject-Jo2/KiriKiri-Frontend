@@ -20,12 +20,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!post) {
     return {
-      title: "모집글 | 키리키리",
+      title: "모집글 | 끼리끼리",
     };
   }
 
   return {
-    title: `${post.title} | 키리키리`,
+    title: `${post.title} | 끼리끼리`,
     description: post.description,
   };
 }

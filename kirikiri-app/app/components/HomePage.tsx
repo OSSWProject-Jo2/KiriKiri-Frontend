@@ -108,7 +108,7 @@ export function HomePage() {
           <div className="flex items-center justify-center gap-2">
             <Sparkles className="w-7 h-7 text-violet-500" />
             <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-500 bg-clip-text text-transparent">
-              키리키리
+              끼리끼리
             </h1>
             <Sparkles className="w-7 h-7 text-violet-500" />
           </div>
