@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { ClerkSignInPanel } from "../components/auth/ClerkSignInPanel";
 
 export const metadata = {
-  title: "로그인 | 키리키리",
+  title: "로그인 | 끼리끼리", 
 };
 
 export default function SignInPage() {

@@ -11,6 +11,7 @@ import { Separator } from "../components/ui/separator";
 import { ParticipationDialog } from "../components/ParticipationDialog";
 import { MatchSuccessDialog } from "../components/MatchSuccessDialog";
 import { useAuth } from "../components/auth/ClerkAuthProvider";
+import { joinPostMock } from "../lib/mockApi";
 import {
   ArrowLeft,
   Users,
@@ -115,7 +116,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   const isFull = post.currentMembers >= post.maxMembers;
   const topicLabel = post.topicName || post.gameName || post.studyName || post.category;
 
-  const handleParticipation = () => {
+  const handleParticipation = async () => {
     if (!isSignedIn) {
       openSignIn();
       return;
@@ -125,15 +126,23 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
 
     setIsMatching(true);
 
-    setTimeout(() => {
-      setIsMatching(false);
+    try {
+      const res = await joinPostMock(post.id, userNickname);
+      if (!res.success) {
+        throw new Error(res.error || "신청 실패");
+      }
+
       setShowParticipationDialog(false);
       toast.success(`${userNickname}님, 참여 신청이 완료되었습니다!`);
 
       setTimeout(() => {
         setShowSuccessDialog(true);
       }, 1500);
-    }, 2500);
+    } catch (err: any) {
+      toast.error(err?.message || "참여 중 오류가 발생했습니다.");
+    } finally {
+      setIsMatching(false);
+    }
   };
 
   return (
