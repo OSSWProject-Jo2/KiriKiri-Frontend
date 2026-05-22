@@ -1,12 +1,10 @@
-import { useState } from "react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 
 type ParticipationDialogProps = {
   open: boolean;
   isMatching: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (nickname: string) => void;
+  onSubmit: () => void;
 };
 
 export function ParticipationDialog({
@@ -15,14 +13,10 @@ export function ParticipationDialog({
   onOpenChange,
   onSubmit,
 }: ParticipationDialogProps) {
-  const [nickname, setNickname] = useState("");
-
   if (!open) return null;
 
   const handleSubmit = () => {
-    const trimmed = nickname.trim();
-    if (!trimmed) return;
-    onSubmit(trimmed);
+    onSubmit();
   };
 
   return (
@@ -30,16 +24,8 @@ export function ParticipationDialog({
       <div className="w-full max-w-[448px] rounded-[28px] bg-white p-5 shadow-2xl">
         <h2 className="text-xl font-black text-slate-950">참여 신청</h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          작성자에게 전달할 닉네임을 입력해주세요.
+          로그인한 닉네임으로 자동 등록됩니다. 확인 후 신청해주세요.
         </p>
-
-        <Input
-          value={nickname}
-          onChange={(event) => setNickname(event.target.value)}
-          placeholder="닉네임"
-          className="mt-5 h-14 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-base"
-          disabled={isMatching}
-        />
 
         <div className="mt-5 grid grid-cols-2 gap-2">
           <Button
@@ -53,7 +39,7 @@ export function ParticipationDialog({
           <Button
             className="h-12 rounded-2xl bg-violet-600 hover:bg-violet-700"
             onClick={handleSubmit}
-            disabled={isMatching || nickname.trim() === ""}
+            disabled={isMatching}
           >
             {isMatching ? "신청 중..." : "신청하기"}
           </Button>

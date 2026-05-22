@@ -10,6 +10,7 @@ import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
 import { ParticipationDialog } from "../components/ParticipationDialog";
 import { MatchSuccessDialog } from "../components/MatchSuccessDialog";
+import { useAuth } from "../components/auth/ClerkAuthProvider";
 import {
   ArrowLeft,
   Users,
@@ -57,6 +58,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   const [showParticipationDialog, setShowParticipationDialog] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const { isSignedIn, nickname, openSignIn } = useAuth();
 
   useEffect(() => {
     if (initialPost || !postId) {
@@ -113,13 +115,20 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   const isFull = post.currentMembers >= post.maxMembers;
   const topicLabel = post.topicName || post.gameName || post.studyName || post.category;
 
-  const handleParticipation = (nickname: string) => {
+  const handleParticipation = () => {
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
+
+    const userNickname = nickname || "익명";
+
     setIsMatching(true);
 
     setTimeout(() => {
       setIsMatching(false);
       setShowParticipationDialog(false);
-      toast.success(`${nickname}님, 참여 신청이 완료되었습니다!`);
+      toast.success(`${userNickname}님, 참여 신청이 완료되었습니다!`);
 
       setTimeout(() => {
         setShowSuccessDialog(true);
