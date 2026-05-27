@@ -11,7 +11,12 @@ import { Separator } from "../components/ui/separator";
 import { ParticipationDialog } from "../components/ParticipationDialog";
 import { MatchSuccessDialog } from "../components/MatchSuccessDialog";
 import { useAuth } from "../components/auth/ClerkAuthProvider";
-import { joinPostMock } from "../lib/mockApi";
+import {
+  acceptApplicantMock,
+  getApplicantsMock,
+  joinPostMock,
+  type Applicant,
+} from "../lib/mockApi";
 import {
   ArrowLeft,
   Users,
@@ -22,6 +27,7 @@ import {
   Lock,
   Sparkles,
   MessageCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Toaster, toast } from "sonner";
@@ -59,6 +65,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   const [showParticipationDialog, setShowParticipationDialog] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
   const { isSignedIn, nickname, openSignIn } = useAuth();
 
   useEffect(() => {
@@ -73,6 +80,18 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
 
     return () => window.clearTimeout(loadSavedPost);
   }, [initialPost, postId]);
+
+  useEffect(() => {
+    if (!post?.id) {
+      return;
+    }
+
+    const loadApplicants = window.setTimeout(() => {
+      setApplicants(getApplicantsMock(post.id));
+    }, 0);
+
+    return () => window.clearTimeout(loadApplicants);
+  }, [post?.id]);
 
   if (!post && !hasCheckedSavedPost) {
     return (
@@ -115,10 +134,21 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
 
   const isFull = post.currentMembers >= post.maxMembers;
   const topicLabel = post.topicName || post.gameName || post.studyName || post.category;
+  const isAuthor = Boolean(isSignedIn && nickname && post.author === nickname);
+  const participationDisabled = isFull || isAuthor;
+  const pendingApplicants = applicants.filter(
+    (applicant) => applicant.status === "pending",
+  );
 
   const handleParticipation = async () => {
     if (!isSignedIn) {
       openSignIn();
+      return;
+    }
+
+    if (isAuthor) {
+      setShowParticipationDialog(false);
+      toast.error("내가 작성한 글에는 신청할 수 없어요.");
       return;
     }
 
@@ -134,15 +164,38 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
 
       setShowParticipationDialog(false);
       toast.success(`${userNickname}님, 참여 신청이 완료되었습니다!`);
-
-      setTimeout(() => {
-        setShowSuccessDialog(true);
-      }, 1500);
-    } catch (err: any) {
-      toast.error(err?.message || "참여 중 오류가 발생했습니다.");
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "참여 중 오류가 발생했습니다.",
+      );
     } finally {
       setIsMatching(false);
     }
+  };
+
+  const handleAcceptApplicant = (applicantId: string) => {
+    const res = acceptApplicantMock(post.id, applicantId);
+
+    if (!res.success) {
+      toast.error(res.error || "수락 중 오류가 발생했습니다.");
+      return;
+    }
+
+    setApplicants(getApplicantsMock(post.id));
+    setPost((currentPost) =>
+      currentPost
+        ? {
+            ...currentPost,
+            currentMembers: Math.min(
+              currentPost.currentMembers + 1,
+              currentPost.maxMembers,
+            ),
+          }
+        : currentPost,
+    );
+    toast.success("신청을 수락하고 알림을 보냈어요.");
   };
 
   return (
@@ -241,6 +294,59 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
                 </p>
               </div>
             </section>
+
+            {isAuthor ? (
+              <section className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-base font-black text-slate-950">
+                    신청자 관리
+                  </h2>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-violet-700">
+                    {pendingApplicants.length}명 대기
+                  </span>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {applicants.length > 0 ? (
+                    applicants.map((applicant) => (
+                      <div
+                        key={applicant.id}
+                        className="flex items-center justify-between gap-3 rounded-2xl bg-white p-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-slate-900">
+                            {applicant.nickname}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {applicant.status === "accepted"
+                              ? "수락 완료"
+                              : "수락 대기"}
+                          </p>
+                        </div>
+                        {applicant.status === "accepted" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-2 text-xs font-bold text-emerald-700">
+                            <CheckCircle2 className="h-4 w-4" />
+                            수락됨
+                          </span>
+                        ) : (
+                          <Button
+                            className="h-10 shrink-0 rounded-2xl bg-violet-600 px-4 text-sm hover:bg-violet-700"
+                            onClick={() => handleAcceptApplicant(applicant.id)}
+                            disabled={isFull}
+                          >
+                            수락
+                          </Button>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="rounded-2xl bg-white p-4 text-center text-sm text-slate-500">
+                      아직 신청자가 없어요.
+                    </p>
+                  )}
+                </div>
+              </section>
+            ) : null}
           </div>
         </Card>
       </motion.main>
@@ -251,9 +357,9 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
             size="lg"
             className="w-full h-14 rounded-2xl text-base font-bold bg-violet-600 hover:bg-violet-700"
             onClick={() => setShowParticipationDialog(true)}
-            disabled={isFull}
+            disabled={participationDisabled}
           >
-            {isFull ? "모집 마감" : "참여하기"}
+            {isAuthor ? "내가 작성한 글" : isFull ? "모집 마감" : "참여하기"}
           </Button>
         </div>
       </div>

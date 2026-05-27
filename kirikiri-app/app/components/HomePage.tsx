@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { mockPosts } from "../data/mockPosts";
 import { getSavedPosts } from "../data/postStorage";
 import { PostCard } from "../components/PostCard";
+import { BottomNavigation } from "../components/BottomNavigation";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { LoginRequiredDialog } from "./auth/LoginRequiredDialog";
@@ -70,7 +71,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="relative min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-24">
+    <div className="relative min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-32">
       <header className="px-5 pt-8 pb-6 bg-white rounded-b-[32px] shadow-sm">
         <div className="flex items-center justify-end">
           {isSignedIn ? (
@@ -193,7 +194,7 @@ export function HomePage() {
         </div>
       </main>
 
-      <div className="fixed bottom-6 left-0 right-0 z-40 pointer-events-none">
+      <div className="fixed bottom-24 left-0 right-0 z-30 pointer-events-none">
         <div className="max-w-[480px] mx-auto px-5 flex justify-end">
           <button
             type="button"
@@ -211,6 +212,10 @@ export function HomePage() {
         open={showLoginRequired}
         onOpenChange={setShowLoginRequired}
       />
+      <BottomNavigation />
     </div>
   );
 }
+
+
+
