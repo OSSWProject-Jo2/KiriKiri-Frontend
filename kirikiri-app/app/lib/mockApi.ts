@@ -24,7 +24,8 @@ function saveApplicants(obj: Record<string, Array<Record<string, unknown>>>) {
 }
 
 export async function joinPostMock(postId: string, nickname: string): Promise<JoinResponse> {
-  // Simulate network latency
+ 
+  // 네트워크 지연 시간 시뮬레이션
   return new Promise((resolve) => {
     setTimeout(() => {
       const post = getSavedPostById(postId) || getPostById(postId);
@@ -61,7 +62,7 @@ export async function joinPostMock(postId: string, nickname: string): Promise<Jo
       applicants[postId].push(applicant);
       saveApplicants(applicants);
 
-      // For dev convenience we return the post's openChatLink so the success dialog can open it.
+      // 개발 편의를 위한 링크 반환
       resolve({ success: true, openChatLink: post.openChatLink });
     }, 700);
   });
