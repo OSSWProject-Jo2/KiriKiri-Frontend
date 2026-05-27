@@ -16,6 +16,11 @@
     "react-dom": "19.2.4",
     "sonner": "latest"
   },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.14"
+    }
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
