@@ -43,6 +43,14 @@ export async function joinPostMock(postId: string, nickname: string): Promise<Jo
         return;
       }
 
+      if (post.author === nickname) {
+        resolve({
+          success: false,
+          error: "내가 작성한 글에는 신청할 수 없어요.",
+        });
+        return;
+      }
+
       if (post.currentMembers >= post.maxMembers) {
         resolve({ success: false, error: "모집 마감" });
         return;

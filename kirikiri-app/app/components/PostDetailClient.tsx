@@ -135,6 +135,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   const isFull = post.currentMembers >= post.maxMembers;
   const topicLabel = post.topicName || post.gameName || post.studyName || post.category;
   const isAuthor = Boolean(isSignedIn && nickname && post.author === nickname);
+  const participationDisabled = isFull || isAuthor;
   const pendingApplicants = applicants.filter(
     (applicant) => applicant.status === "pending",
   );
@@ -142,6 +143,12 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   const handleParticipation = async () => {
     if (!isSignedIn) {
       openSignIn();
+      return;
+    }
+
+    if (isAuthor) {
+      setShowParticipationDialog(false);
+      toast.error("내가 작성한 글에는 신청할 수 없어요.");
       return;
     }
 
@@ -350,9 +357,9 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
             size="lg"
             className="w-full h-14 rounded-2xl text-base font-bold bg-violet-600 hover:bg-violet-700"
             onClick={() => setShowParticipationDialog(true)}
-            disabled={isFull}
+            disabled={participationDisabled}
           >
-            {isFull ? "모집 마감" : "참여하기"}
+            {isAuthor ? "내가 작성한 글" : isFull ? "모집 마감" : "참여하기"}
           </Button>
         </div>
       </div>
