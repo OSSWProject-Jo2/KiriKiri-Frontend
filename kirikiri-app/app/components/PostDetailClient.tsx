@@ -3,7 +3,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { Post } from "../data/mockPosts";
-import { getSavedPostById } from "../data/postStorage";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -17,11 +16,11 @@ import {
   joinPostMock,
   type Applicant,
 } from "../lib/mockApi";
+import { getPost } from "../lib/api";
 import {
   ArrowLeft,
   Users,
   Target,
-  Trophy,
   Calendar,
   User,
   Lock,
@@ -73,12 +72,31 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
       return;
     }
 
-    const loadSavedPost = window.setTimeout(() => {
-      setPost(getSavedPostById(postId));
-      setHasCheckedSavedPost(true);
-    }, 0);
+    let isActive = true;
+    const requestedPostId = postId;
 
-    return () => window.clearTimeout(loadSavedPost);
+    async function loadPost() {
+      try {
+        const nextPost = await getPost(requestedPostId);
+        if (isActive) {
+          setPost(nextPost);
+        }
+      } catch {
+        if (isActive) {
+          setPost(undefined);
+        }
+      } finally {
+        if (isActive) {
+          setHasCheckedSavedPost(true);
+        }
+      }
+    }
+
+    void loadPost();
+
+    return () => {
+      isActive = false;
+    };
   }, [initialPost, postId]);
 
   useEffect(() => {
@@ -157,7 +175,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
     setIsMatching(true);
 
     try {
-      const res = await joinPostMock(post.id, userNickname);
+      const res = await joinPostMock(post.id, userNickname, post);
       if (!res.success) {
         throw new Error(res.error || "신청 실패");
       }
@@ -247,12 +265,6 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
                 icon={<User className="w-5 h-5" />}
                 label="작성자"
                 value={post.author}
-              />
-
-              <InfoItem
-                icon={<Trophy className="w-5 h-5" />}
-                label="작성자 티어"
-                value={post.authorTier}
               />
 
               <InfoItem

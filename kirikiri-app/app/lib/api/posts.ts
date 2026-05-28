@@ -2,7 +2,19 @@ import type { Post } from "../../data/mockPosts";
 import type { Applicant, JoinResponse } from "../mockApi";
 import { apiClient } from "./client";
 
-export type CreatePostRequest = Omit<Post, "id" | "createdAt" | "currentMembers">;
+export type CreatePostRequest = {
+  title: string;
+  category: string;
+  categoryTag: string;
+  targetScore: string;
+  maxMembers: number;
+  description: string;
+  openChatLink: string;
+  author: string;
+  password?: string;
+  gameName?: string;
+  studyName?: string;
+};
 
 export type JoinPostRequest = {
   nickname: string;
@@ -20,10 +32,30 @@ export async function getPost(postId: string) {
   });
 }
 
-export async function createPost(post: CreatePostRequest) {
+export async function createPost(post: CreatePostRequest, authToken?: string | null) {
   return apiClient<Post>("/api/posts", {
     method: "POST",
+    authToken: authToken || undefined,
     body: JSON.stringify(post),
+  });
+}
+
+export async function updatePost(
+  postId: string,
+  post: CreatePostRequest,
+  authToken?: string | null,
+) {
+  return apiClient<Post>(`/api/posts/${postId}`, {
+    method: "PUT",
+    authToken: authToken || undefined,
+    body: JSON.stringify(post),
+  });
+}
+
+export async function deletePost(postId: string, authToken?: string | null) {
+  return apiClient<void>(`/api/posts/${postId}`, {
+    method: "DELETE",
+    authToken: authToken || undefined,
   });
 }
 

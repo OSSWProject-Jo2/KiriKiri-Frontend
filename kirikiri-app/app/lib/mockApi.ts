@@ -1,5 +1,5 @@
 import { getSavedPostById } from "../data/postStorage";
-import { getPostById } from "../data/mockPosts";
+import { getPostById, type Post } from "../data/mockPosts";
 import { addNotification } from "../data/notificationStorage";
 
 export type JoinResponse = {
@@ -31,12 +31,16 @@ function saveApplicants(obj: Record<string, Applicant[]>) {
   window.localStorage.setItem(APPLICANTS_KEY, JSON.stringify(obj));
 }
 
-export async function joinPostMock(postId: string, nickname: string): Promise<JoinResponse> {
+export async function joinPostMock(
+  postId: string,
+  nickname: string,
+  fallbackPost?: Post,
+): Promise<JoinResponse> {
  
   // 네트워크 지연 시간 시뮬레이션
   return new Promise((resolve) => {
     setTimeout(() => {
-      const post = getSavedPostById(postId) || getPostById(postId);
+      const post = getSavedPostById(postId) || getPostById(postId) || fallbackPost;
 
       if (!post) {
         resolve({ success: false, error: "모집글을 찾을 수 없습니다." });

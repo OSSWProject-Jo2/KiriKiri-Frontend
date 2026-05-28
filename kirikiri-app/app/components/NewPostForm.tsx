@@ -4,23 +4,32 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, LogIn, Send } from "lucide-react";
-import { savePost } from "../data/postStorage";
 import { useAuth } from "./auth/ClerkAuthProvider";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { createPost } from "../lib/api";
 
-function todayText() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
+function getTopicFields(category: string, topicName: string) {
+  const normalizedCategory = category.toLowerCase();
 
-  return `${year}.${month}.${day}`;
+  if (normalizedCategory.includes("게임") || normalizedCategory.includes("game")) {
+    return { gameName: topicName, studyName: "" };
+  }
+
+  if (
+    normalizedCategory.includes("공부") ||
+    normalizedCategory.includes("스터디") ||
+    normalizedCategory.includes("study")
+  ) {
+    return { gameName: "", studyName: topicName };
+  }
+
+  return { gameName: "", studyName: "" };
 }
 
 export function NewPostForm() {
   const router = useRouter();
-  const { isLoaded, isSignedIn, nickname, openSignIn } = useAuth();
+  const { isLoaded, isSignedIn, nickname, openSignIn, getToken } = useAuth();
   const [category, setCategory] = useState("");
   const [topicName, setTopicName] = useState("");
   const [title, setTitle] = useState("");
@@ -28,8 +37,10 @@ export function NewPostForm() {
   const [maxMembers, setMaxMembers] = useState(5);
   const [description, setDescription] = useState("");
   const [openChatLink, setOpenChatLink] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!isSignedIn) {
@@ -37,22 +48,37 @@ export function NewPostForm() {
       return;
     }
 
-    savePost({
-      id: `local-${Date.now()}`,
-      category: category.trim(),
-      title: title.trim(),
-      description: description.trim(),
-      author: nickname || "익명",
-      authorTier: "새 멤버",
-      currentMembers: 1,
-      maxMembers,
-      targetScore: targetScore.trim(),
-      createdAt: todayText(),
-      openChatLink: openChatLink.trim(),
-      topicName: topicName.trim(),
-    });
+    setIsSubmitting(true);
+    setSubmitError("");
 
-    router.push("/");
+    // API 서버에 post 생성 요청
+    try {
+      const token = await getToken();
+      const trimmedCategory = category.trim();
+      const trimmedTopicName = topicName.trim();
+      const createdPost = await createPost(
+        {
+          title: title.trim(),
+          category: trimmedCategory,
+          categoryTag: trimmedTopicName,
+          targetScore: targetScore.trim(),
+          maxMembers,
+          description: description.trim(),
+          openChatLink: openChatLink.trim(),
+          author: nickname || "익명",
+          password: "clerk-authenticated",
+          ...getTopicFields(trimmedCategory, trimmedTopicName),
+        },
+        token,
+      );
+
+      router.push(createdPost?.id ? `/post/${createdPost.id}` : "/");
+      router.refresh();
+    } catch {
+      setSubmitError("모집글 등록에 실패했어요. 백엔드 서버와 로그인을 확인해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoaded && !isSignedIn) {
@@ -71,7 +97,7 @@ export function NewPostForm() {
             로그인이 필요해요
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            모집글을 작성하려면 먼저 로그인해 주세요.
+            모집글을 작성하려면 먼저 로그인해주세요
           </p>
           <Button
             type="button"
@@ -106,10 +132,10 @@ export function NewPostForm() {
           <section className="space-y-4 rounded-[28px] bg-white p-5 shadow-sm border border-slate-100">
             <div>
               <h1 className="text-2xl font-black text-slate-950">
-                새 모집글 만들기
+                모집글 만들기
               </h1>
               <p className="mt-1 text-sm text-slate-500">
-                분야를 자유롭게 적고, 함께할 사람을 모집해 보세요.
+                분야와 모임명을 적고 함께할 사람을 모집해보세요
               </p>
             </div>
 
@@ -119,7 +145,7 @@ export function NewPostForm() {
                 required
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="예: 같이 꾸준히 할 분 구해요"
+                placeholder="예: 같이 랭크 올릴 파티 구해요"
                 className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>
@@ -130,7 +156,7 @@ export function NewPostForm() {
                 required
                 value={category}
                 onChange={(event) => setCategory(event.target.value)}
-                placeholder="예: 게임, 공부, 운동..."
+                placeholder="예: 게임, 공부, 운동"
                 className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>
@@ -141,7 +167,7 @@ export function NewPostForm() {
                 required
                 value={topicName}
                 onChange={(event) => setTopicName(event.target.value)}
-                placeholder="예: 리그 오브 레전드, 정보처리기사, 한강 러닝"
+                placeholder="예: 리그 오브 레전드, 정보처리기사, 새벽 러닝"
                 className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>
@@ -176,7 +202,7 @@ export function NewPostForm() {
                 required
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="모집 조건, 진행 시간, 원하는 분위기를 적어주세요"
+                placeholder="모집 조건, 진행 시간, 원하는 분위기를 적어주세요."
                 rows={5}
                 className="mt-2 w-full resize-none rounded-2xl bg-slate-100 border-0 px-4 py-3 text-sm leading-6 outline-none focus:ring-2 focus:ring-violet-300"
               />
@@ -195,16 +221,23 @@ export function NewPostForm() {
                 className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
               />
             </label>
+
+            {submitError ? (
+              <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                {submitError}
+              </p>
+            ) : null}
           </section>
 
           <div className="sticky bottom-0 -mx-5 mt-4 px-5 py-4 bg-white/90 backdrop-blur-md border-t border-slate-100">
             <Button
               type="submit"
               size="lg"
+              disabled={isSubmitting}
               className="w-full h-14 rounded-2xl gap-2 text-base font-bold bg-violet-600 hover:bg-violet-700"
             >
               <Send className="w-5 h-5" />
-              등록하기
+              {isSubmitting ? "등록 중..." : "등록하기"}
             </Button>
           </div>
         </form>
