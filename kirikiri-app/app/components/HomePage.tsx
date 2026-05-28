@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { mockPosts } from "../data/mockPosts";
-import { getSavedPosts } from "../data/postStorage";
+import { mockPosts, type Post } from "../data/mockPosts";
+import { getPosts } from "../lib/api";
 import { PostCard } from "../components/PostCard";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { Button } from "../components/ui/button";
@@ -21,18 +21,42 @@ export function HomePage() {
   const { isLoaded, isSignedIn, nickname, openSignIn, signOut } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES);
   const [searchQuery, setSearchQuery] = useState("");
-  const [savedPosts, setSavedPosts] = useState<typeof mockPosts>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const [postsError, setPostsError] = useState("");
   const [showLoginRequired, setShowLoginRequired] = useState(false);
 
   useEffect(() => {
-    const loadSavedPosts = window.setTimeout(() => {
-      setSavedPosts(getSavedPosts());
-    }, 0);
+    let isActive = true;
 
-    return () => window.clearTimeout(loadSavedPosts);
+    // API 서버에서 post 호출
+    async function loadPosts() {
+      try {
+        const nextPosts = await getPosts();
+        if (isActive) {
+          setPosts(nextPosts);
+          setPostsError("");
+        }
+      } catch {
+        if (isActive) {
+          setPosts(mockPosts);
+          setPostsError("백엔드 서버에 연결할 수 없어 예시 데이터를 보여주고 있어요.");
+        }
+      } finally {
+        if (isActive) {
+          setIsLoadingPosts(false);
+        }
+      }
+    }
+
+    void loadPosts();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
-  const posts = useMemo(() => [...savedPosts, ...mockPosts], [savedPosts]);
+
   const categories = useMemo(
     () => [
       ALL_CATEGORIES,
@@ -172,7 +196,11 @@ export function HomePage() {
         </div>
 
         <div className="space-y-4">
-          {filteredPosts.length > 0 ? (
+          {isLoadingPosts ? (
+            <div className="py-20 text-center bg-white rounded-[28px] border border-slate-100">
+              <p className="text-slate-500">모집글을 불러오는 중이에요.</p>
+            </div>
+          ) : filteredPosts.length > 0 ? (
             filteredPosts.map((post, index) => (
               <motion.div
                 key={post.id}
@@ -192,6 +220,12 @@ export function HomePage() {
             </div>
           )}
         </div>
+
+        {postsError ? (
+          <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+            {postsError}
+          </p>
+        ) : null}
       </main>
 
       <div className="fixed bottom-24 left-0 right-0 z-30 pointer-events-none">

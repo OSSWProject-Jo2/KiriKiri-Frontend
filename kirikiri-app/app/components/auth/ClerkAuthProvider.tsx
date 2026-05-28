@@ -27,6 +27,10 @@
   type ClerkInstance = {
     isSignedIn?: boolean;
     user?: ClerkUser | null;
+    session?: {
+      getToken: () => Promise<string | null>;
+    } | null;
+    
     load: (options?: unknown) => Promise<void>;
     openSignIn: (options?: unknown) => void;
     signOut: () => Promise<void>;
@@ -50,6 +54,7 @@
     nickname: string;
     openSignIn: () => void;
     signOut: () => Promise<void>;
+    getToken: () => Promise<string | null>;
     setNickname: (nickname: string) => Promise<void>;
   };
 
@@ -179,6 +184,7 @@
           await window.Clerk?.signOut();
           setUser(null);
         },
+        getToken: async () => window.Clerk?.session?.getToken() || null,
         setNickname: async (nextNickname: string) => {
           if (!user) {
             return;
