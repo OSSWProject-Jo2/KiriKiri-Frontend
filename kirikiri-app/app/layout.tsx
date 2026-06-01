@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "끼리끼리 | 모임 모집",
-  description: "함께할 사람을 찾고 모임을 모집하는 끼리키리 앱",
+  description: "함께할 사람을 찾고 모임을 모집하는 끼리끼리 앱",
 };
 
 export default function RootLayout({

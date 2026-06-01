@@ -12,13 +12,16 @@ import { ParticipationDialog } from "../components/ParticipationDialog";
 import { MatchSuccessDialog } from "../components/MatchSuccessDialog";
 import { useAuth } from "../components/auth/ClerkAuthProvider";
 import {
-  acceptApplicantMock,
-  getApplicantsMock,
-  joinPostMock,
   notifyPostDeletedMock,
   type Applicant,
 } from "../lib/mockApi";
-import { deletePost, getPost } from "../lib/api";
+import {
+  acceptApplicant,
+  deletePost,
+  getApplicants,
+  getPost,
+  joinPost,
+} from "../lib/api";
 import {
   ArrowLeft,
   Users,
@@ -70,7 +73,12 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   const [isDeleting, setIsDeleting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [acceptingApplicantId, setAcceptingApplicantId] = useState<string | null>(
+    null,
+  );
   const { isSignedIn, nickname, openSignIn, getToken } = useAuth();
+  const isFull = Boolean(post && post.currentMembers >= post.maxMembers);
+  const isAuthor = Boolean(isSignedIn && nickname && post?.author === nickname);
 
   useEffect(() => {
     if (initialPost || !postId) {
@@ -105,16 +113,34 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   }, [initialPost, postId]);
 
   useEffect(() => {
-    if (!post?.id) {
+    if (!post?.id || !isAuthor) {
       return;
     }
 
-    const loadApplicants = window.setTimeout(() => {
-      setApplicants(getApplicantsMock(post.id));
-    }, 0);
+    let isActive = true;
+    const currentPostId = post.id;
 
-    return () => window.clearTimeout(loadApplicants);
-  }, [post?.id]);
+    async function loadApplicants() {
+      try {
+        const token = await getToken();
+        const nextApplicants = await getApplicants(currentPostId, token);
+
+        if (isActive) {
+          setApplicants(nextApplicants);
+        }
+      } catch {
+        if (isActive) {
+          setApplicants([]);
+        }
+      }
+    }
+
+    void loadApplicants();
+
+    return () => {
+      isActive = false;
+    };
+  }, [getToken, isAuthor, post?.id]);
 
   if (!post && !hasCheckedSavedPost) {
     return (
@@ -155,9 +181,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
     );
   }
 
-  const isFull = post.currentMembers >= post.maxMembers;
   const topicLabel = post.topicName || post.gameName || post.studyName || post.category;
-  const isAuthor = Boolean(isSignedIn && nickname && post.author === nickname);
   const participationDisabled = isFull || isAuthor;
   const pendingApplicants = applicants.filter(
     (applicant) => applicant.status === "pending",
@@ -180,7 +204,8 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
     setIsMatching(true);
 
     try {
-      const res = await joinPostMock(post.id, userNickname, post);
+      const token = await getToken();
+      const res = await joinPost(post.id, { nickname: userNickname }, token);
       if (!res.success) {
         throw new Error(res.error || "신청 실패");
       }
@@ -198,27 +223,35 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
     }
   };
 
-  const handleAcceptApplicant = (applicantId: string) => {
-    const res = acceptApplicantMock(post.id, applicantId);
+  const handleAcceptApplicant = async (applicantId: string) => {
+    setAcceptingApplicantId(applicantId);
 
-    if (!res.success) {
-      toast.error(res.error || "수락 중 오류가 발생했습니다.");
-      return;
+    try {
+      const token = await getToken();
+      const res = await acceptApplicant(post.id, applicantId, token);
+
+      if (!res.success) {
+        throw new Error(res.error || "수락 중 오류가 발생했습니다.");
+      }
+
+      const [nextPost, nextApplicants] = await Promise.all([
+        getPost(post.id),
+        getApplicants(post.id, token),
+      ]);
+
+      setPost(nextPost);
+      setApplicants(nextApplicants);
+      toast.success("신청을 수락하고 인원 수를 갱신했어요.");
+      router.refresh();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "수락 중 오류가 발생했습니다.",
+      );
+    } finally {
+      setAcceptingApplicantId(null);
     }
-
-    setApplicants(getApplicantsMock(post.id));
-    setPost((currentPost) =>
-      currentPost
-        ? {
-            ...currentPost,
-            currentMembers: Math.min(
-              currentPost.currentMembers + 1,
-              currentPost.maxMembers,
-            ),
-          }
-        : currentPost,
-    );
-    toast.success("신청을 수락하고 알림을 보냈어요.");
   };
 
   const handleDeletePost = async () => {
@@ -398,9 +431,11 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
                           <Button
                             className="h-10 shrink-0 rounded-2xl bg-violet-600 px-4 text-sm hover:bg-violet-700"
                             onClick={() => handleAcceptApplicant(applicant.id)}
-                            disabled={isFull}
+                            disabled={isFull || acceptingApplicantId !== null}
                           >
-                            수락
+                            {acceptingApplicantId === applicant.id
+                              ? "수락 중"
+                              : "수락"}
                           </Button>
                         )}
                       </div>

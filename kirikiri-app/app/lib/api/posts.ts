@@ -59,24 +59,35 @@ export async function deletePost(postId: string, authToken?: string | null) {
   });
 }
 
-export async function joinPost(postId: string, request: JoinPostRequest) {
+export async function joinPost(
+  postId: string,
+  request: JoinPostRequest,
+  authToken?: string | null,
+) {
   return apiClient<JoinResponse>(`/api/posts/${postId}/applications`, {
     method: "POST",
+    authToken: authToken || undefined,
     body: JSON.stringify(request),
   });
 }
 
-export async function getApplicants(postId: string) {
+export async function getApplicants(postId: string, authToken?: string | null) {
   return apiClient<Applicant[]>(`/api/posts/${postId}/applications`, {
     method: "GET",
+    authToken: authToken || undefined,
   });
 }
 
-export async function acceptApplicant(postId: string, applicantId: string) {
+export async function acceptApplicant(
+  postId: string,
+  applicantId: string,
+  authToken?: string | null,
+) {
   return apiClient<{ success: boolean; error?: string }>(
     `/api/posts/${postId}/applications/${applicantId}/accept`,
     {
       method: "PATCH",
+      authToken: authToken || undefined,
     },
   );
 }
