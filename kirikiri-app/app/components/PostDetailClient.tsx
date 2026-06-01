@@ -15,6 +15,7 @@ import {
   acceptApplicantMock,
   getApplicantsMock,
   joinPostMock,
+  notifyPostDeletedMock,
   type Applicant,
 } from "../lib/mockApi";
 import { deletePost, getPost } from "../lib/api";
@@ -237,6 +238,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
     try {
       const token = await getToken();
       await deletePost(post.id, token);
+      notifyPostDeletedMock(post, nickname || post.author);
       toast.success("모집글을 삭제했어요.");
       router.push("/");
       router.refresh();
