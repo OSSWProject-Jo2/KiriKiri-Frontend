@@ -6,11 +6,11 @@ import { Input } from "../ui/input";
 import { useAuth } from "./ClerkAuthProvider";
 
 export function NicknameDialog() {
-  const { isSignedIn, nickname, setNickname } = useAuth();
+  const { isSignedIn, hasNickname, setNickname } = useAuth();
   const [value, setValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  if (!isSignedIn || nickname) {
+  if (!isSignedIn || hasNickname) {
     return null;
   }
 

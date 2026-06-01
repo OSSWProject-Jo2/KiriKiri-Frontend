@@ -17,6 +17,7 @@
     username?: string | null;
     fullName?: string | null;
     publicMetadata?: Record<string, unknown>;
+    unsafeMetadata?: Record<string, unknown>;
     update?: (params: {
       firstName?: string;
       username?: string;
@@ -52,6 +53,7 @@
     isConfigured: boolean;
     user: ClerkUser | null;
     nickname: string;
+    hasNickname: boolean;
     openSignIn: () => void;
     signOut: () => Promise<void>;
     getToken: () => Promise<string | null>;
@@ -158,12 +160,17 @@
       };
     }, [publishableKey, refreshUser]);
 
-    const nickname =
+    const savedNickname =
+      (user?.unsafeMetadata?.nickname as string | undefined) ||
       (user?.publicMetadata?.nickname as string | undefined) ||
+      "";
+    const nickname =
+      savedNickname ||
       user?.username ||
       user?.firstName ||
       user?.fullName ||
       "";
+    const hasNickname = Boolean(savedNickname);
 
     const value = useMemo<AuthContextValue>(
       () => ({
@@ -172,6 +179,7 @@
         isConfigured,
         user,
         nickname,
+        hasNickname,
         openSignIn: () => {
           if (window.Clerk?.openSignIn) {
             window.Clerk.openSignIn({ redirectUrl: "/" });
@@ -192,19 +200,22 @@
 
           await user?.update?.({
             firstName: nextNickname,
-            unsafeMetadata: { nickname: nextNickname },
+            unsafeMetadata: {
+              ...user.unsafeMetadata,
+              nickname: nextNickname,
+            },
           });
           setUser({
             ...user,
             firstName: nextNickname,
-            publicMetadata: {
-              ...user.publicMetadata,
+            unsafeMetadata: {
+              ...user.unsafeMetadata,
               nickname: nextNickname,
             },
           });
         },
       }),
-      [isConfigured, isLoaded, nickname, user],
+      [hasNickname, isConfigured, isLoaded, nickname, user],
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

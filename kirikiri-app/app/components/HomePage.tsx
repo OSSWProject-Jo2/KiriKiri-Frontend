@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { mockPosts, type Post } from "../data/mockPosts";
@@ -14,7 +14,8 @@ import { useAuth } from "./auth/ClerkAuthProvider";
 import { Flame, LogIn, LogOut, Plus, Search, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 
-const ALL_CATEGORIES = "전체";
+const categories = ["전체", "게임", "공부", "운동"];
+const ALL_CATEGORIES = categories[0];
 
 export function HomePage() {
   const router = useRouter();
@@ -55,15 +56,6 @@ export function HomePage() {
       isActive = false;
     };
   }, []);
-
-
-  const categories = useMemo(
-    () => [
-      ALL_CATEGORIES,
-      ...Array.from(new Set(posts.map((post) => post.category))),
-    ],
-    [posts],
-  );
 
   const filteredPosts = posts.filter((post) => {
     const matchesCategory =
