@@ -27,10 +27,12 @@ function getTopicFields(category: string, topicName: string) {
   return { gameName: "", studyName: "" };
 }
 
+const postCategories = ["게임", "공부", "운동"];
+
 export function NewPostForm() {
   const router = useRouter();
   const { isLoaded, isSignedIn, nickname, openSignIn, getToken } = useAuth();
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(postCategories[0]);
   const [topicName, setTopicName] = useState("");
   const [title, setTitle] = useState("");
   const [targetScore, setTargetScore] = useState("");
@@ -152,13 +154,22 @@ export function NewPostForm() {
 
             <label className="block">
               <span className="text-sm font-bold text-slate-700">분야</span>
-              <Input
-                required
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                placeholder="예: 게임, 공부, 운동"
-                className="mt-2 h-12 rounded-2xl bg-slate-100 border-0 px-4"
-              />
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {postCategories.map((categoryItem) => (
+                  <button
+                    key={categoryItem}
+                    type="button"
+                    onClick={() => setCategory(categoryItem)}
+                    className={`h-12 rounded-2xl text-sm font-bold transition-colors ${
+                      category === categoryItem
+                        ? "bg-violet-600 text-white"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    {categoryItem}
+                  </button>
+                ))}
+              </div>
             </label>
 
             <label className="block">
