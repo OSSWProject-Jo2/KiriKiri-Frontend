@@ -126,3 +126,29 @@ export function acceptApplicantMock(postId: string, applicantId: string) {
 
   return { success: true };
 }
+
+export function notifyPostDeletedMock(post: Post, actorNickname: string) {
+  const applicants = loadApplicants();
+  const postApplicants = applicants[post.id] || [];
+  const recipientNicknames = Array.from(
+    new Set(
+      postApplicants
+        .map((applicant) => applicant.nickname)
+        .filter((applicantNickname) => applicantNickname !== actorNickname),
+    ),
+  );
+
+  recipientNicknames.forEach((recipientNickname) => {
+    addNotification({
+      kind: "deleted",
+      postId: post.id,
+      postTitle: post.title,
+      recipientNickname,
+      actorNickname,
+      message: `"${post.title}" 모집글이 작성자에 의해 삭제되었어요.`,
+    });
+  });
+
+  delete applicants[post.id];
+  saveApplicants(applicants);
+}

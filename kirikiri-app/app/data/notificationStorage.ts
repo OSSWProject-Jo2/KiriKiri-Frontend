@@ -1,4 +1,4 @@
-export type NotificationKind = "application" | "accepted";
+export type NotificationKind = "application" | "accepted" | "deleted";
 
 export type AppNotification = {
   id: string;

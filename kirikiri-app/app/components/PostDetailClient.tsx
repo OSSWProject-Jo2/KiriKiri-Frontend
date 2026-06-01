@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Post } from "../data/mockPosts";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -14,9 +15,10 @@ import {
   acceptApplicantMock,
   getApplicantsMock,
   joinPostMock,
+  notifyPostDeletedMock,
   type Applicant,
 } from "../lib/mockApi";
-import { getPost } from "../lib/api";
+import { deletePost, getPost } from "../lib/api";
 import {
   ArrowLeft,
   Users,
@@ -27,6 +29,7 @@ import {
   Sparkles,
   MessageCircle,
   CheckCircle2,
+  Trash2,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Toaster, toast } from "sonner";
@@ -57,15 +60,17 @@ type PostDetailClientProps = {
 };
 
 export function PostDetailClient({ post: initialPost, postId }: PostDetailClientProps) {
+  const router = useRouter();
   const [post, setPost] = useState<Post | undefined>(initialPost);
   const [hasCheckedSavedPost, setHasCheckedSavedPost] = useState(
     Boolean(initialPost),
   );
   const [showParticipationDialog, setShowParticipationDialog] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
-  const { isSignedIn, nickname, openSignIn } = useAuth();
+  const { isSignedIn, nickname, openSignIn, getToken } = useAuth();
 
   useEffect(() => {
     if (initialPost || !postId) {
@@ -216,6 +221,33 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
     toast.success("신청을 수락하고 알림을 보냈어요.");
   };
 
+  const handleDeletePost = async () => {
+    if (!isAuthor) {
+      toast.error("작성자만 삭제할 수 있어요.");
+      return;
+    }
+
+    const confirmed = window.confirm("이 모집글을 삭제할까요?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const token = await getToken();
+      await deletePost(post.id, token);
+      notifyPostDeletedMock(post, nickname || post.author);
+      toast.success("모집글을 삭제했어요.");
+      router.push("/");
+      router.refresh();
+    } catch {
+      toast.error("모집글 삭제에 실패했어요. 잠시 후 다시 시도해주세요.");
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-28">
       <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100">
@@ -309,6 +341,28 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
 
             {isAuthor ? (
               <section className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                <div className="mb-4 rounded-2xl border border-red-100 bg-white p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-sm font-black text-slate-950">
+                        모집글 관리
+                      </h2>
+                      <p className="mt-1 text-xs text-slate-500">
+                        작성한 모집글을 삭제할 수 있어요.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleDeletePost}
+                      disabled={isDeleting}
+                      className="h-10 shrink-0 rounded-2xl bg-red-500 px-4 text-sm text-white hover:bg-red-600 disabled:opacity-60"
+                    >
+                      <Trash2 className="mr-1.5 h-4 w-4" />
+                      {isDeleting ? "삭제 중" : "삭제"}
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-base font-black text-slate-950">
                     신청자 관리

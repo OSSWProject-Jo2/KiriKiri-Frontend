@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Bell, CheckCircle2, ExternalLink, Inbox } from "lucide-react";
+import {
+  ArrowLeft,
+  Bell,
+  CheckCircle2,
+  ExternalLink,
+  Inbox,
+  Trash2,
+} from "lucide-react";
 import {
   type AppNotification,
   getNotifications,
@@ -25,6 +32,18 @@ function formatNotificationTime(createdAt: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function getNotificationTitle(notification: AppNotification) {
+  if (notification.kind === "accepted") {
+    return "신청 수락";
+  }
+
+  if (notification.kind === "deleted") {
+    return "모집글 삭제";
+  }
+
+  return "새 참여 신청";
 }
 
 export function NotificationsPage() {
@@ -91,11 +110,15 @@ export function NotificationsPage() {
                     className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
                       notification.kind === "accepted"
                         ? "bg-emerald-100 text-emerald-700"
+                        : notification.kind === "deleted"
+                          ? "bg-red-100 text-red-700"
                         : "bg-violet-100 text-violet-700"
                     }`}
                   >
                     {notification.kind === "accepted" ? (
                       <CheckCircle2 className="h-5 w-5" />
+                    ) : notification.kind === "deleted" ? (
+                      <Trash2 className="h-5 w-5" />
                     ) : (
                       <Inbox className="h-5 w-5" />
                     )}
@@ -103,9 +126,7 @@ export function NotificationsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <h2 className="text-sm font-black text-slate-950">
-                        {notification.kind === "accepted"
-                          ? "신청 수락"
-                          : "새 참여 신청"}
+                        {getNotificationTitle(notification)}
                       </h2>
                       <span className="shrink-0 text-xs font-semibold text-slate-400">
                         {formatNotificationTime(notification.createdAt)}
@@ -114,12 +135,14 @@ export function NotificationsPage() {
                     <p className="mt-1 text-sm leading-6 text-slate-600">
                       {notification.message}
                     </p>
-                    <Link
-                      href={`/post/${notification.postId}`}
-                      className="mt-3 inline-flex text-sm font-bold text-violet-700"
-                    >
-                      게시글 보기
-                    </Link>
+                    {notification.kind !== "deleted" ? (
+                      <Link
+                        href={`/post/${notification.postId}`}
+                        className="mt-3 inline-flex text-sm font-bold text-violet-700"
+                      >
+                        게시글 보기
+                      </Link>
+                    ) : null}
                     {notification.openChatLink ? (
                       <Button
                         className="mt-3 h-11 w-full rounded-2xl gap-2 bg-violet-600 hover:bg-violet-700"
