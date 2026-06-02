@@ -87,7 +87,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="relative min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-32">
+    <div className="app-shell relative min-h-screen overflow-hidden pb-32">
       <header className="px-5 pt-8 pb-6 bg-white rounded-b-[32px] shadow-sm">
         <div className="flex items-center justify-end">
           {isSignedIn ? (
@@ -122,12 +122,12 @@ export function HomePage() {
           transition={{ duration: 0.45 }}
           className="mt-5 text-center"
         >
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="w-7 h-7 text-violet-500" />
+          <div className="flex min-w-0 items-center justify-center gap-2">
+            <Sparkles className="h-7 w-7 shrink-0 text-violet-500" />
             <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-violet-700 to-fuchsia-500 bg-clip-text text-transparent">
               끼리끼리
             </h1>
-            <Sparkles className="w-7 h-7 text-violet-500" />
+            <Sparkles className="h-7 w-7 shrink-0 text-violet-500" />
           </div>
 
           <p className="mt-2 text-sm text-slate-500">
@@ -160,7 +160,7 @@ export function HomePage() {
             <Button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`h-11 shrink-0 rounded-2xl px-4 ${
+              className={`h-11 min-w-18 shrink-0 rounded-2xl px-4 ${
                 selectedCategory === category
                   ? "bg-violet-600 text-white"
                   : "bg-white text-slate-700 border border-slate-200"
@@ -220,14 +220,14 @@ export function HomePage() {
         ) : null}
       </main>
 
-      <div className="fixed bottom-24 left-0 right-0 z-30 pointer-events-none">
-        <div className="max-w-[480px] mx-auto px-5 flex justify-end">
+      <div className="app-fixed bottom-24 z-30 pointer-events-none px-5">
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={handleCreatePost}
             aria-label="모집글 작성"
             title="모집글 작성"
-            className="pointer-events-auto inline-flex h-18 w-18 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg shadow-violet-600/30 transition hover:bg-violet-700 hover:scale-105 active:scale-90"
+            className="pointer-events-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg shadow-violet-600/30 transition hover:bg-violet-700 hover:scale-105 active:scale-90"
           >
             <Plus className="h-8 w-8" />
           </button>

@@ -14,12 +14,15 @@ export function MatchSuccessDialog({
 }: MatchSuccessDialogProps) {
   if (!open) return null;
 
+  const hasOpenChatLink = openChatLink.trim().length > 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 px-4 pb-5">
       <div className="w-full max-w-[448px] rounded-[28px] bg-white p-5 shadow-2xl">
-        <h2 className="text-xl font-black text-slate-950">매칭 성공!</h2>
+        <h2 className="text-xl font-black text-slate-950">신청 완료!</h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
-          작성자가 참여 신청을 수락했습니다. 오픈채팅 링크로 이동해보세요.
+          참여 신청이 완료되었습니다. 아래 버튼으로 오픈채팅방에 바로
+          입장할 수 있어요.
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-2">
@@ -32,10 +35,11 @@ export function MatchSuccessDialog({
           </Button>
           <Button
             className="h-12 rounded-2xl gap-2 bg-violet-600 hover:bg-violet-700"
+            disabled={!hasOpenChatLink}
             onClick={() => window.open(openChatLink, "_blank", "noopener,noreferrer")}
           >
             <ExternalLink className="w-4 h-4" />
-            열기
+            오픈채팅 열기
           </Button>
         </div>
       </div>
