@@ -39,8 +39,8 @@ export function BottomNavigation() {
   }, [nickname, pathname]);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
-      <div className="mx-auto max-w-[480px] border-t border-slate-100 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md pointer-events-auto">
+    <nav className="app-fixed bottom-0 z-40 pointer-events-none">
+      <div className="border-t border-slate-100 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md pointer-events-auto">
         <div className="grid grid-cols-3 gap-1">
           {navItems.map((item) => {
             const Icon = item.icon;

@@ -14,6 +14,20 @@ body {
     sans-serif;
 }
 
+.app-shell {
+  width: min(100vw, 480px);
+  margin-inline: auto;
+  background: #f8f7ff;
+  box-shadow: 0 0 32px rgb(15 23 42 / 0.08);
+}
+
+.app-fixed {
+  position: fixed;
+  left: 50%;
+  width: min(100vw, 480px);
+  transform: translateX(-50%);
+}
+
 button,
 input {
   font: inherit;
