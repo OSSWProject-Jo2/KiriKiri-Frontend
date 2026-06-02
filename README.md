@@ -7,6 +7,7 @@
 
 실행하기 전 Clerk 키를 입력해야 합니다.
 ### "개발 중에만"
+.env 환경파일에서
 개발 버전 Key인 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY'에 입력해주세요.
 
 ```bash
