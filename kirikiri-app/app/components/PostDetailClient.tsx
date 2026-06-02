@@ -72,6 +72,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   const [isMatching, setIsMatching] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successOpenChatLink, setSuccessOpenChatLink] = useState("");
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [acceptingApplicantId, setAcceptingApplicantId] = useState<string | null>(
     null,
@@ -211,6 +212,8 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
       }
 
       setShowParticipationDialog(false);
+      setSuccessOpenChatLink(res.openChatLink || post.openChatLink);
+      setShowSuccessDialog(true);
       toast.success(`${userNickname}님, 참여 신청이 완료되었습니다!`);
     } catch (err: unknown) {
       toast.error(
@@ -347,7 +350,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
               <InfoItem
                 icon={<Lock className="w-5 h-5" />}
                 label="오픈채팅 링크"
-                value="수락 후 공개"
+                value="신청 후 공개"
               />
             </div>
 
@@ -367,7 +370,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
                 <MessageCircle className="w-5 h-5 text-violet-600 mt-0.5" />
                 <p className="text-sm leading-6 text-violet-800">
                   참여 신청을 하면 작성자에게 닉네임이 전달되고,
-                  작성자가 수락하면 오픈채팅 링크가 공개됩니다.
+                  신청 완료 후 오픈채팅 링크가 바로 공개됩니다.
                 </p>
               </div>
             </section>
@@ -475,7 +478,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
       <MatchSuccessDialog
         open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
-        openChatLink={post.openChatLink}
+        openChatLink={successOpenChatLink || post.openChatLink}
       />
       <Toaster position="top-center" richColors />
     </div>
