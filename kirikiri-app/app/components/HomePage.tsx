@@ -58,6 +58,7 @@ export function HomePage() {
   }, []);
 
   const filteredPosts = posts.filter((post) => {
+    const isRecruiting = post.currentMembers < post.maxMembers;
     const matchesCategory =
       selectedCategory === ALL_CATEGORIES || post.category === selectedCategory;
 
@@ -70,7 +71,7 @@ export function HomePage() {
       topicName.toLowerCase().includes(loweredQuery) ||
       post.description.toLowerCase().includes(loweredQuery);
 
-    return matchesCategory && matchesSearch;
+    return isRecruiting && matchesCategory && matchesSearch;
   });
 
   const handleCreatePost = () => {
