@@ -3,19 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell, FileText, User } from "lucide-react";
+import { Bell, FileText, Settings } from "lucide-react";
 import { getUnreadNotificationCount } from "../data/notificationStorage";
+import { getBackendUnreadNotificationCount } from "../lib/api";
 import { useAuth } from "./auth/ClerkAuthProvider";
 
 const navItems = [
   {
     href: "/profile",
-    label: "프로필",
-    icon: User,
+    label: "관리",
+    icon: Settings,
   },
   {
     href: "/",
-    label: "포스트",
+    label: "게시글",
     icon: FileText,
   },
   {
@@ -31,11 +32,32 @@ export function BottomNavigation() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    const loadUnreadCount = window.setTimeout(() => {
-      setUnreadCount(getUnreadNotificationCount(nickname));
-    }, 0);
+    let isActive = true;
 
-    return () => window.clearTimeout(loadUnreadCount);
+    async function loadUnreadCount() {
+      if (!nickname) {
+        setUnreadCount(0);
+        return;
+      }
+
+      try {
+        const nextUnreadCount = await getBackendUnreadNotificationCount(nickname);
+
+        if (isActive) {
+          setUnreadCount(nextUnreadCount);
+        }
+      } catch {
+        if (isActive) {
+          setUnreadCount(getUnreadNotificationCount(nickname));
+        }
+      }
+    }
+
+    void loadUnreadCount();
+
+    return () => {
+      isActive = false;
+    };
   }, [nickname, pathname]);
 
   return (

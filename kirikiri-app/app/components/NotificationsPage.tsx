@@ -15,6 +15,13 @@ import {
   getNotifications,
   markNotificationsRead,
 } from "../data/notificationStorage";
+import {
+  acceptApplicant,
+  getApplicants,
+  getBackendNotifications,
+  getPost,
+  markBackendNotificationsRead,
+} from "../lib/api";
 import { useAuth } from "./auth/ClerkAuthProvider";
 import { BottomNavigation } from "./BottomNavigation";
 import { Button } from "./ui/button";
@@ -46,19 +53,141 @@ function getNotificationTitle(notification: AppNotification) {
   return "새 참여 신청";
 }
 
+function getNotificationMessage(notification: AppNotification) {
+  if (notification.kind === "application") {
+    return `${notification.actorNickname}님이 ${notification.postTitle}에 참여를 신청했습니다.`;
+  }
+
+  return notification.message;
+}
+
+async function getNotificationStatusIds(
+  notifications: AppNotification[],
+  authToken?: string | null,
+) {
+  const applicationNotifications = notifications.filter(
+    (notification) => notification.kind === "application",
+  );
+  const postLinkedNotifications = notifications.filter(
+    (notification) => notification.kind !== "deleted",
+  );
+  const acceptedIds = new Set<string>();
+  const inactiveIds = new Set<string>();
+  const uniquePostIds = [
+    ...new Set(
+      postLinkedNotifications.map((notification) => notification.postId),
+    ),
+  ];
+
+  await Promise.all(
+    uniquePostIds.map(async (postId) => {
+      const notificationsForPost = postLinkedNotifications.filter(
+        (notification) => notification.postId === postId,
+      );
+
+      try {
+        await getPost(postId);
+      } catch {
+        notificationsForPost.forEach((notification) => {
+          inactiveIds.add(notification.id);
+        });
+        return;
+      }
+
+      try {
+        const applicants = await getApplicants(postId, authToken);
+        const acceptedNicknames = new Set(
+          applicants
+            .filter((applicant) => applicant.status === "accepted")
+            .map((applicant) => applicant.nickname),
+        );
+
+        applicationNotifications
+          .filter((notification) => notification.postId === postId)
+          .forEach((notification) => {
+            if (acceptedNicknames.has(notification.actorNickname)) {
+              acceptedIds.add(notification.id);
+            }
+          });
+      } catch {
+        // Applicants can see accepted notifications, but cannot query host-only applicants.
+      }
+    }),
+  );
+
+  return { acceptedIds, inactiveIds };
+}
+
 export function NotificationsPage() {
-  const { isLoaded, isSignedIn, nickname, openSignIn } = useAuth();
+  const { isSignedIn, nickname, openSignIn, getToken } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [acceptingNotificationId, setAcceptingNotificationId] = useState<
+    string | null
+  >(null);
+  const [acceptedNotificationIds, setAcceptedNotificationIds] = useState<
+    Set<string>
+  >(() => new Set());
+  const [inactiveNotificationIds, setInactiveNotificationIds] = useState<
+    Set<string>
+  >(() => new Set());
 
   useEffect(() => {
-    const loadNotifications = window.setTimeout(() => {
-      const nextNotifications = getNotifications(nickname);
-      setNotifications(nextNotifications);
-      markNotificationsRead(nickname);
-    }, 0);
+    let isActive = true;
 
-    return () => window.clearTimeout(loadNotifications);
-  }, [nickname]);
+    async function loadNotifications() {
+      if (!nickname) {
+        setNotifications([]);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const nextNotifications = await getBackendNotifications(nickname);
+
+        if (!isActive) {
+          return;
+        }
+
+        setNotifications(nextNotifications);
+        const token = await getToken();
+        const { acceptedIds, inactiveIds } = await getNotificationStatusIds(
+          nextNotifications,
+          token,
+        );
+
+        if (!isActive) {
+          return;
+        }
+
+        setAcceptedNotificationIds(acceptedIds);
+        setInactiveNotificationIds(inactiveIds);
+        await markBackendNotificationsRead(nickname);
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        const fallbackNotifications = getNotifications(nickname);
+        setNotifications(fallbackNotifications);
+        setAcceptedNotificationIds(new Set());
+        setInactiveNotificationIds(new Set());
+        markNotificationsRead(nickname);
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadNotifications();
+
+    return () => {
+      isActive = false;
+    };
+  }, [getToken, nickname]);
 
   const emptyMessage = useMemo(() => {
     if (!isSignedIn) {
@@ -67,6 +196,54 @@ export function NotificationsPage() {
 
     return "아직 받은 알림이 없어요.";
   }, [isSignedIn]);
+
+  const handleAcceptNotification = async (notification: AppNotification) => {
+    if (inactiveNotificationIds.has(notification.id)) {
+      return;
+    }
+
+    setAcceptingNotificationId(notification.id);
+
+    try {
+      const token = await getToken();
+      const applicants = await getApplicants(notification.postId, token);
+      const applicant = applicants.find(
+        (item) =>
+          item.status === "pending" &&
+          item.nickname === notification.actorNickname,
+      );
+
+      if (!applicant) {
+        window.alert("수락할 신청자를 찾을 수 없어요.");
+        return;
+      }
+
+      const response = await acceptApplicant(
+        notification.postId,
+        applicant.id,
+        token,
+      );
+
+      if (!response.success) {
+        throw new Error(response.error || "신청 수락에 실패했어요.");
+      }
+
+      setAcceptedNotificationIds((previousIds) => {
+        const nextIds = new Set(previousIds);
+        nextIds.add(notification.id);
+        return nextIds;
+      });
+      window.alert("신청을 수락했어요.");
+    } catch (error: unknown) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "신청 수락 중 오류가 발생했어요.",
+      );
+    } finally {
+      setAcceptingNotificationId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-28">
@@ -98,70 +275,127 @@ export function NotificationsPage() {
           </div>
         </section>
 
-        {!isLoaded || notifications.length > 0 ? (
+        {isLoading || notifications.length > 0 ? (
           <div className="mt-4 space-y-3">
-            {notifications.map((notification) => (
-              <article
-                key={notification.id}
-                className="rounded-[24px] bg-white p-4 shadow-sm border border-slate-100"
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-                      notification.kind === "accepted"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : notification.kind === "deleted"
-                          ? "bg-red-100 text-red-700"
-                        : "bg-violet-100 text-violet-700"
-                    }`}
-                  >
-                    {notification.kind === "accepted" ? (
-                      <CheckCircle2 className="h-5 w-5" />
-                    ) : notification.kind === "deleted" ? (
-                      <Trash2 className="h-5 w-5" />
-                    ) : (
-                      <Inbox className="h-5 w-5" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <h2 className="text-sm font-black text-slate-950">
-                        {getNotificationTitle(notification)}
-                      </h2>
-                      <span className="shrink-0 text-xs font-semibold text-slate-400">
-                        {formatNotificationTime(notification.createdAt)}
-                      </span>
+            {notifications.map((notification) => {
+              const isInactiveNotification =
+                inactiveNotificationIds.has(notification.id);
+              const isAcceptableApplication =
+                notification.kind === "application" &&
+                !acceptedNotificationIds.has(notification.id) &&
+                !isInactiveNotification;
+              const isAccepting =
+                acceptingNotificationId === notification.id;
+
+              return (
+                <article
+                  key={notification.id}
+                  className={`rounded-[24px] p-4 shadow-sm border ${
+                    isInactiveNotification
+                      ? "bg-slate-100 border-slate-200 opacity-75"
+                      : "bg-white border-slate-100"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
+                        isInactiveNotification
+                          ? "bg-slate-200 text-slate-500"
+                          : notification.kind === "accepted"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : notification.kind === "deleted"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-violet-100 text-violet-700"
+                      }`}
+                    >
+                      {notification.kind === "accepted" ? (
+                        <CheckCircle2 className="h-5 w-5" />
+                      ) : notification.kind === "deleted" ? (
+                        <Trash2 className="h-5 w-5" />
+                      ) : (
+                        <Inbox className="h-5 w-5" />
+                      )}
                     </div>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      {notification.message}
-                    </p>
-                    {notification.kind !== "deleted" ? (
-                      <Link
-                        href={`/post/${notification.postId}`}
-                        className="mt-3 inline-flex text-sm font-bold text-violet-700"
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <h2
+                          className={`text-sm font-black ${
+                            isInactiveNotification
+                              ? "text-slate-500"
+                              : "text-slate-950"
+                          }`}
+                        >
+                          {getNotificationTitle(notification)}
+                        </h2>
+                        <span className="shrink-0 text-xs font-semibold text-slate-400">
+                          {formatNotificationTime(notification.createdAt)}
+                        </span>
+                      </div>
+                      <p
+                        className={`mt-1 text-sm leading-6 ${
+                          isInactiveNotification
+                            ? "text-slate-500"
+                            : "text-slate-600"
+                        }`}
                       >
-                        게시글 보기
-                      </Link>
-                    ) : null}
-                    {notification.openChatLink ? (
-                      <Button
-                        className="mt-3 h-11 w-full rounded-2xl gap-2 bg-violet-600 hover:bg-violet-700"
-                        onClick={() =>
-                          window.open(
-                            notification.openChatLink,
-                            "_blank",
-                            "noopener,noreferrer",
-                          )
-                        }
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        오픈채팅 열기
-                      </Button>
-                    ) : null}
+                        {getNotificationMessage(notification)}
+                      </p>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        {isInactiveNotification ? (
+                          <span className="inline-flex h-10 items-center text-sm font-bold text-slate-500">
+                            삭제된 게시글
+                          </span>
+                        ) : notification.kind !== "deleted" ? (
+                          <Link
+                            href={`/post/${notification.postId}`}
+                            className="inline-flex h-10 items-center text-sm font-bold text-violet-700"
+                          >
+                            게시글 보기
+                          </Link>
+                        ) : null}
+                        {notification.kind === "application" ? (
+                          <Button
+                            type="button"
+                            className={`ml-auto h-10 rounded-2xl px-4 text-sm ${
+                              isInactiveNotification
+                                ? "bg-slate-300 text-slate-600 hover:bg-slate-300"
+                                : "bg-violet-600 hover:bg-violet-700"
+                            }`}
+                            disabled={!isAcceptableApplication || isAccepting}
+                            onClick={() =>
+                              void handleAcceptNotification(notification)
+                            }
+                          >
+                            {isInactiveNotification
+                              ? "삭제됨"
+                              : acceptedNotificationIds.has(notification.id)
+                              ? "수락 완료"
+                              : isAccepting
+                                ? "수락 중"
+                                : "수락"}
+                          </Button>
+                        ) : null}
+                      </div>
+                      {notification.openChatLink && !isInactiveNotification ? (
+                        <Button
+                          className="mt-3 h-11 w-full rounded-2xl gap-2 bg-violet-600 hover:bg-violet-700"
+                          onClick={() =>
+                            window.open(
+                              notification.openChatLink,
+                              "_blank",
+                              "noopener,noreferrer",
+                            )
+                          }
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          오픈채팅 열기
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         ) : (
           <section className="mt-4 rounded-[28px] bg-white p-8 text-center shadow-sm border border-slate-100">
