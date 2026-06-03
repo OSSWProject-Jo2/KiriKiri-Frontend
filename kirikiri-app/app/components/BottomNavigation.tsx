@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell, FileText, User } from "lucide-react";
+import { Bell, FileText, Settings } from "lucide-react";
 import { getUnreadNotificationCount } from "../data/notificationStorage";
 import { getBackendUnreadNotificationCount } from "../lib/api";
 import { useAuth } from "./auth/ClerkAuthProvider";
@@ -11,8 +11,8 @@ import { useAuth } from "./auth/ClerkAuthProvider";
 const navItems = [
   {
     href: "/profile",
-    label: "프로필",
-    icon: User,
+    label: "관리",
+    icon: Settings,
   },
   {
     href: "/",
