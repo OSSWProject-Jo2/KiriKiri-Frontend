@@ -60,7 +60,7 @@ function getNotificationMessage(notification: AppNotification) {
   return notification.message;
 }
 
-async function getAcceptedNotificationIds(
+async function getApplicationNotificationStatusIds(
   notifications: AppNotification[],
   authToken?: string | null,
 ) {
@@ -68,6 +68,7 @@ async function getAcceptedNotificationIds(
     (notification) => notification.kind === "application",
   );
   const acceptedIds = new Set<string>();
+  const inactiveIds = new Set<string>();
   const uniquePostIds = [
     ...new Set(
       applicationNotifications.map((notification) => notification.postId),
@@ -92,12 +93,16 @@ async function getAcceptedNotificationIds(
             }
           });
       } catch {
-        // Keep the action available if the current application status is unavailable.
+        applicationNotifications
+          .filter((notification) => notification.postId === postId)
+          .forEach((notification) => {
+            inactiveIds.add(notification.id);
+          });
       }
     }),
   );
 
-  return acceptedIds;
+  return { acceptedIds, inactiveIds };
 }
 
 export function NotificationsPage() {
@@ -108,6 +113,9 @@ export function NotificationsPage() {
     string | null
   >(null);
   const [acceptedNotificationIds, setAcceptedNotificationIds] = useState<
+    Set<string>
+  >(() => new Set());
+  const [inactiveNotificationIds, setInactiveNotificationIds] = useState<
     Set<string>
   >(() => new Set());
 
@@ -132,7 +140,8 @@ export function NotificationsPage() {
 
         setNotifications(nextNotifications);
         const token = await getToken();
-        const nextAcceptedIds = await getAcceptedNotificationIds(
+        const { acceptedIds, inactiveIds } =
+          await getApplicationNotificationStatusIds(
           nextNotifications,
           token,
         );
@@ -141,7 +150,8 @@ export function NotificationsPage() {
           return;
         }
 
-        setAcceptedNotificationIds(nextAcceptedIds);
+        setAcceptedNotificationIds(acceptedIds);
+        setInactiveNotificationIds(inactiveIds);
         await markBackendNotificationsRead(nickname);
       } catch {
         if (!isActive) {
@@ -150,6 +160,8 @@ export function NotificationsPage() {
 
         const fallbackNotifications = getNotifications(nickname);
         setNotifications(fallbackNotifications);
+        setAcceptedNotificationIds(new Set());
+        setInactiveNotificationIds(new Set());
         markNotificationsRead(nickname);
       } finally {
         if (isActive) {
@@ -174,6 +186,10 @@ export function NotificationsPage() {
   }, [isSignedIn]);
 
   const handleAcceptNotification = async (notification: AppNotification) => {
+    if (inactiveNotificationIds.has(notification.id)) {
+      return;
+    }
+
     setAcceptingNotificationId(notification.id);
 
     try {
@@ -250,21 +266,30 @@ export function NotificationsPage() {
         {isLoading || notifications.length > 0 ? (
           <div className="mt-4 space-y-3">
             {notifications.map((notification) => {
+              const isInactiveNotification =
+                inactiveNotificationIds.has(notification.id);
               const isAcceptableApplication =
                 notification.kind === "application" &&
-                !acceptedNotificationIds.has(notification.id);
+                !acceptedNotificationIds.has(notification.id) &&
+                !isInactiveNotification;
               const isAccepting =
                 acceptingNotificationId === notification.id;
 
               return (
                 <article
                   key={notification.id}
-                  className="rounded-[24px] bg-white p-4 shadow-sm border border-slate-100"
+                  className={`rounded-[24px] p-4 shadow-sm border ${
+                    isInactiveNotification
+                      ? "bg-slate-100 border-slate-200 opacity-75"
+                      : "bg-white border-slate-100"
+                  }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-                        notification.kind === "accepted"
+                        isInactiveNotification
+                          ? "bg-slate-200 text-slate-500"
+                          : notification.kind === "accepted"
                           ? "bg-emerald-100 text-emerald-700"
                           : notification.kind === "deleted"
                             ? "bg-red-100 text-red-700"
@@ -281,18 +306,34 @@ export function NotificationsPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
-                        <h2 className="text-sm font-black text-slate-950">
+                        <h2
+                          className={`text-sm font-black ${
+                            isInactiveNotification
+                              ? "text-slate-500"
+                              : "text-slate-950"
+                          }`}
+                        >
                           {getNotificationTitle(notification)}
                         </h2>
                         <span className="shrink-0 text-xs font-semibold text-slate-400">
                           {formatNotificationTime(notification.createdAt)}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                      <p
+                        className={`mt-1 text-sm leading-6 ${
+                          isInactiveNotification
+                            ? "text-slate-500"
+                            : "text-slate-600"
+                        }`}
+                      >
                         {getNotificationMessage(notification)}
                       </p>
                       <div className="mt-3 flex items-center justify-between gap-3">
-                        {notification.kind !== "deleted" ? (
+                        {isInactiveNotification ? (
+                          <span className="inline-flex h-10 items-center text-sm font-bold text-slate-500">
+                            삭제된 게시글
+                          </span>
+                        ) : notification.kind !== "deleted" ? (
                           <Link
                             href={`/post/${notification.postId}`}
                             className="inline-flex h-10 items-center text-sm font-bold text-violet-700"
@@ -303,13 +344,19 @@ export function NotificationsPage() {
                         {notification.kind === "application" ? (
                           <Button
                             type="button"
-                            className="ml-auto h-10 rounded-2xl bg-violet-600 px-4 text-sm hover:bg-violet-700"
+                            className={`ml-auto h-10 rounded-2xl px-4 text-sm ${
+                              isInactiveNotification
+                                ? "bg-slate-300 text-slate-600 hover:bg-slate-300"
+                                : "bg-violet-600 hover:bg-violet-700"
+                            }`}
                             disabled={!isAcceptableApplication || isAccepting}
                             onClick={() =>
                               void handleAcceptNotification(notification)
                             }
                           >
-                            {acceptedNotificationIds.has(notification.id)
+                            {isInactiveNotification
+                              ? "삭제됨"
+                              : acceptedNotificationIds.has(notification.id)
                               ? "수락 완료"
                               : isAccepting
                                 ? "수락 중"
