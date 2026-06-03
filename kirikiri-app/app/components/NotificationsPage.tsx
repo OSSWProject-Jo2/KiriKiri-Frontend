@@ -60,6 +60,46 @@ function getNotificationMessage(notification: AppNotification) {
   return notification.message;
 }
 
+async function getAcceptedNotificationIds(
+  notifications: AppNotification[],
+  authToken?: string | null,
+) {
+  const applicationNotifications = notifications.filter(
+    (notification) => notification.kind === "application",
+  );
+  const acceptedIds = new Set<string>();
+  const uniquePostIds = [
+    ...new Set(
+      applicationNotifications.map((notification) => notification.postId),
+    ),
+  ];
+
+  await Promise.all(
+    uniquePostIds.map(async (postId) => {
+      try {
+        const applicants = await getApplicants(postId, authToken);
+        const acceptedNicknames = new Set(
+          applicants
+            .filter((applicant) => applicant.status === "accepted")
+            .map((applicant) => applicant.nickname),
+        );
+
+        applicationNotifications
+          .filter((notification) => notification.postId === postId)
+          .forEach((notification) => {
+            if (acceptedNicknames.has(notification.actorNickname)) {
+              acceptedIds.add(notification.id);
+            }
+          });
+      } catch {
+        // Keep the action available if the current application status is unavailable.
+      }
+    }),
+  );
+
+  return acceptedIds;
+}
+
 export function NotificationsPage() {
   const { isSignedIn, nickname, openSignIn, getToken } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -91,6 +131,17 @@ export function NotificationsPage() {
         }
 
         setNotifications(nextNotifications);
+        const token = await getToken();
+        const nextAcceptedIds = await getAcceptedNotificationIds(
+          nextNotifications,
+          token,
+        );
+
+        if (!isActive) {
+          return;
+        }
+
+        setAcceptedNotificationIds(nextAcceptedIds);
         await markBackendNotificationsRead(nickname);
       } catch {
         if (!isActive) {
@@ -112,7 +163,7 @@ export function NotificationsPage() {
     return () => {
       isActive = false;
     };
-  }, [nickname]);
+  }, [getToken, nickname]);
 
   const emptyMessage = useMemo(() => {
     if (!isSignedIn) {
