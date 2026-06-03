@@ -15,6 +15,10 @@ import {
   getNotifications,
   markNotificationsRead,
 } from "../data/notificationStorage";
+import {
+  getBackendNotifications,
+  markBackendNotificationsRead,
+} from "../lib/api";
 import { useAuth } from "./auth/ClerkAuthProvider";
 import { BottomNavigation } from "./BottomNavigation";
 import { Button } from "./ui/button";
@@ -47,17 +51,51 @@ function getNotificationTitle(notification: AppNotification) {
 }
 
 export function NotificationsPage() {
-  const { isLoaded, isSignedIn, nickname, openSignIn } = useAuth();
+  const { isSignedIn, nickname, openSignIn } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadNotifications = window.setTimeout(() => {
-      const nextNotifications = getNotifications(nickname);
-      setNotifications(nextNotifications);
-      markNotificationsRead(nickname);
-    }, 0);
+    let isActive = true;
 
-    return () => window.clearTimeout(loadNotifications);
+    async function loadNotifications() {
+      if (!nickname) {
+        setNotifications([]);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const nextNotifications = await getBackendNotifications(nickname);
+
+        if (!isActive) {
+          return;
+        }
+
+        setNotifications(nextNotifications);
+        await markBackendNotificationsRead(nickname);
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        const fallbackNotifications = getNotifications(nickname);
+        setNotifications(fallbackNotifications);
+        markNotificationsRead(nickname);
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadNotifications();
+
+    return () => {
+      isActive = false;
+    };
   }, [nickname]);
 
   const emptyMessage = useMemo(() => {
@@ -98,7 +136,7 @@ export function NotificationsPage() {
           </div>
         </section>
 
-        {!isLoaded || notifications.length > 0 ? (
+        {isLoading || notifications.length > 0 ? (
           <div className="mt-4 space-y-3">
             {notifications.map((notification) => (
               <article
@@ -112,7 +150,7 @@ export function NotificationsPage() {
                         ? "bg-emerald-100 text-emerald-700"
                         : notification.kind === "deleted"
                           ? "bg-red-100 text-red-700"
-                        : "bg-violet-100 text-violet-700"
+                          : "bg-violet-100 text-violet-700"
                     }`}
                   >
                     {notification.kind === "accepted" ? (
