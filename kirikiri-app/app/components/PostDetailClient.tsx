@@ -215,7 +215,9 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   }
 
   const topicLabel = post.topicName || post.gameName || post.studyName || post.category;
-  const participationDisabled = isFull || isAuthor;
+  // 이미 신청했거나, 정원이 찼거나, 본인 글이면 참여하기 버튼 비활성화
+  const hasApplied = Boolean(myApplicationStatus);
+  const participationDisabled = isFull || isAuthor || hasApplied;
   const pendingApplicants = applicants.filter(
     (applicant) => applicant.status === "pending",
   );
@@ -244,7 +246,8 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
       }
 
       setShowParticipationDialog(false);
-      setSuccessOpenChatLink(res.openChatLink || post.openChatLink);
+      // 백엔드가 null 반환 시 빈 문자열로 설정 (팝업에서 링크 미표시)
+      setSuccessOpenChatLink(res.openChatLink || "");
       setShowSuccessDialog(true);
       toast.success(`${userNickname}님, 참여 신청이 완료되었습니다!`);
     } catch (err: unknown) {
@@ -382,7 +385,12 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
               <InfoItem
                 icon={<Lock className="w-5 h-5" />}
                 label="오픈채팅 링크"
-                value={myOpenChatLink ?? (myApplicationStatus === "pending" ? "수락 대기 중" : "신청 후 공개")}
+                value={
+                  isAuthor
+                    ? post.openChatLink              // 작성자는 본인 글 링크 바로 표시
+                    : myOpenChatLink                 // 수락된 신청자는 링크 표시
+                    ?? (myApplicationStatus === "pending" ? "수락 대기 중" : "신청 후 공개")
+                }
               />
             </div>
 
@@ -510,7 +518,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
       <MatchSuccessDialog
         open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
-        openChatLink={successOpenChatLink || post.openChatLink}
+        openChatLink={successOpenChatLink}
       />
       <Toaster position="top-center" richColors />
     </div>
