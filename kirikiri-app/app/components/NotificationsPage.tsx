@@ -246,7 +246,7 @@ export function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-28">
+    <div className="app-shell min-h-screen pb-28">
       <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100">
         <div className="px-4 py-3 flex items-center justify-between">
           <Link

@@ -10,7 +10,7 @@ export function ProfilePage() {
   const { isSignedIn, openSignIn } = useAuth();
 
   return (
-    <div className="min-h-screen max-w-[480px] mx-auto bg-[#F8F7FF] pb-28">
+    <div className="app-shell min-h-screen pb-28">
       <header className="px-5 pt-8 pb-6 bg-white rounded-b-[32px] shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
@@ -33,8 +33,8 @@ export function ProfilePage() {
               className="flex items-center justify-between rounded-[24px] border border-slate-100 bg-white p-5 shadow-sm transition-colors hover:bg-slate-50"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
-                  <FileText className="h-5 w-5" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                  <FileText className="h-6 w-6" />
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-base font-black text-slate-950">
