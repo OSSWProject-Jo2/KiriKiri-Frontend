@@ -19,6 +19,7 @@ import {
   acceptApplicant,
   getApplicants,
   getBackendNotifications,
+  getPost,
   markBackendNotificationsRead,
 } from "../lib/api";
 import { useAuth } from "./auth/ClerkAuthProvider";
@@ -60,23 +61,39 @@ function getNotificationMessage(notification: AppNotification) {
   return notification.message;
 }
 
-async function getApplicationNotificationStatusIds(
+async function getNotificationStatusIds(
   notifications: AppNotification[],
   authToken?: string | null,
 ) {
   const applicationNotifications = notifications.filter(
     (notification) => notification.kind === "application",
   );
+  const postLinkedNotifications = notifications.filter(
+    (notification) => notification.kind !== "deleted",
+  );
   const acceptedIds = new Set<string>();
   const inactiveIds = new Set<string>();
   const uniquePostIds = [
     ...new Set(
-      applicationNotifications.map((notification) => notification.postId),
+      postLinkedNotifications.map((notification) => notification.postId),
     ),
   ];
 
   await Promise.all(
     uniquePostIds.map(async (postId) => {
+      const notificationsForPost = postLinkedNotifications.filter(
+        (notification) => notification.postId === postId,
+      );
+
+      try {
+        await getPost(postId);
+      } catch {
+        notificationsForPost.forEach((notification) => {
+          inactiveIds.add(notification.id);
+        });
+        return;
+      }
+
       try {
         const applicants = await getApplicants(postId, authToken);
         const acceptedNicknames = new Set(
@@ -93,11 +110,7 @@ async function getApplicationNotificationStatusIds(
             }
           });
       } catch {
-        applicationNotifications
-          .filter((notification) => notification.postId === postId)
-          .forEach((notification) => {
-            inactiveIds.add(notification.id);
-          });
+        // Applicants can see accepted notifications, but cannot query host-only applicants.
       }
     }),
   );
@@ -140,8 +153,7 @@ export function NotificationsPage() {
 
         setNotifications(nextNotifications);
         const token = await getToken();
-        const { acceptedIds, inactiveIds } =
-          await getApplicationNotificationStatusIds(
+        const { acceptedIds, inactiveIds } = await getNotificationStatusIds(
           nextNotifications,
           token,
         );
@@ -364,7 +376,7 @@ export function NotificationsPage() {
                           </Button>
                         ) : null}
                       </div>
-                      {notification.openChatLink ? (
+                      {notification.openChatLink && !isInactiveNotification ? (
                         <Button
                           className="mt-3 h-11 w-full rounded-2xl gap-2 bg-violet-600 hover:bg-violet-700"
                           onClick={() =>
