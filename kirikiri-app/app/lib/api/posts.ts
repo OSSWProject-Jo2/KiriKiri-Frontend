@@ -78,6 +78,19 @@ export async function getApplicants(postId: string, authToken?: string | null) {
   });
 }
 
+// 내 신청 상태 조회 - 수락됐을 때만 오픈채팅 링크 반환
+export type MyApplicationResponse = {
+  status: "pending" | "accepted";
+  openChatLink: string | null;
+};
+
+export async function getMyApplication(postId: string, authToken?: string | null) {
+  return apiClient<MyApplicationResponse>(`/api/posts/${postId}/applications/me`, {
+    method: "GET",
+    authToken: authToken || undefined,
+  });
+}
+
 export async function acceptApplicant(
   postId: string,
   applicantId: string,

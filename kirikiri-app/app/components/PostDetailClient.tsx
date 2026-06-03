@@ -19,6 +19,7 @@ import {
   acceptApplicant,
   deletePost,
   getApplicants,
+  getMyApplication,
   getPost,
   joinPost,
 } from "../lib/api";
@@ -73,6 +74,8 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
   const [isDeleting, setIsDeleting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successOpenChatLink, setSuccessOpenChatLink] = useState("");
+  const [myOpenChatLink, setMyOpenChatLink] = useState<string | null>(null); // 수락 후 공개되는 링크
+  const [myApplicationStatus, setMyApplicationStatus] = useState<string | null>(null); // 내 신청 상태
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [acceptingApplicantId, setAcceptingApplicantId] = useState<string | null>(
     null,
@@ -142,6 +145,35 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
       isActive = false;
     };
   }, [getToken, isAuthor, post?.id]);
+
+  // 내 신청 상태 조회 - 수락됐을 때 오픈채팅 링크를 "신청 후 공개" 섹션에 표시
+  useEffect(() => {
+    if (!post?.id || !isSignedIn || isAuthor) {
+      return;
+    }
+
+    let isActive = true;
+    const currentPostId = post.id;
+
+    async function loadMyApplication() {
+      try {
+        const token = await getToken();
+        const result = await getMyApplication(currentPostId, token);
+        if (isActive) {
+          setMyApplicationStatus(result.status);
+          setMyOpenChatLink(result.openChatLink);
+        }
+      } catch {
+        // 신청 내역 없으면 무시
+      }
+    }
+
+    void loadMyApplication();
+
+    return () => {
+      isActive = false;
+    };
+  }, [getToken, isAuthor, isSignedIn, post?.id]);
 
   if (!post && !hasCheckedSavedPost) {
     return (
@@ -350,7 +382,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
               <InfoItem
                 icon={<Lock className="w-5 h-5" />}
                 label="오픈채팅 링크"
-                value="신청 후 공개"
+                value={myOpenChatLink ?? (myApplicationStatus === "pending" ? "수락 대기 중" : "신청 후 공개")}
               />
             </div>
 
