@@ -518,7 +518,7 @@ export function PostDetailClient({ post: initialPost, postId }: PostDetailClient
       <MatchSuccessDialog
         open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
-        openChatLink={successOpenChatLink || post.openChatLink}
+        openChatLink={successOpenChatLink}
       />
       <Toaster position="top-center" richColors />
     </div>
