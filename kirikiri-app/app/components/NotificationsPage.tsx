@@ -50,6 +50,14 @@ function getNotificationTitle(notification: AppNotification) {
   return "새 참여 신청";
 }
 
+function getNotificationMessage(notification: AppNotification) {
+  if (notification.kind === "application") {
+    return `${notification.actorNickname}님이 ${notification.postTitle}에 참여를 신청했습니다.`;
+  }
+
+  return notification.message;
+}
+
 export function NotificationsPage() {
   const { isSignedIn, nickname, openSignIn } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -171,7 +179,7 @@ export function NotificationsPage() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm leading-6 text-slate-600">
-                      {notification.message}
+                      {getNotificationMessage(notification)}
                     </p>
                     {notification.kind !== "deleted" ? (
                       <Link
