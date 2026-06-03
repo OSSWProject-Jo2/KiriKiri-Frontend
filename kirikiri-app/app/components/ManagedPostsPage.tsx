@@ -116,10 +116,9 @@ export function ManagedPostsPage() {
 
                 return (
                   <Link key={post.id} href={`/post/${post.id}`} className="block">
-                    <div className="relative">
-                      <PostCard post={post} />
+                    <div>
                       <span
-                        className={`absolute right-5 top-5 rounded-full px-3 py-1 text-xs font-bold ${
+                        className={`mb-2 ml-auto flex w-fit rounded-full px-3 py-1 text-xs font-bold ${
                           isFull
                             ? "bg-slate-200 text-slate-600"
                             : "bg-emerald-100 text-emerald-700"
@@ -127,6 +126,7 @@ export function ManagedPostsPage() {
                       >
                         {isFull ? "모집마감" : "모집중"}
                       </span>
+                      <PostCard post={post} />
                     </div>
                   </Link>
                 );
