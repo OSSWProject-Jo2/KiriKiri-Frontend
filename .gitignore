@@ -21,3 +21,4 @@ yarn-error.log*
 # misc
 .DS_Store
 *.tsbuildinfo
+frontend_report.md
